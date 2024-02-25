@@ -1,0 +1,212 @@
+JSON Video Matrix API
+=====================
+
+Draft 1
+
+
+Objective
+---------
+
+This API/Protocol consideration is supposed to be an architectural
+guide to implement a scalable, virtually unlimited network of video and audio
+routing systems that still are lightweight enaugh per-node to allow
+simple, memory constrained microcontrollers to be fully functional nodes
+using the protocol to be derived from this paper.
+
+Nomenclature
+------------
+
+== Elements in a network ==
+
+* Matrix or Router
+ A matrix or router represents a switching matrix that can route any one of
+ n inputs to any of it's m outputs.
+ It performs mere switching of the signal.
+ It does not perform any scaling or mixing of any kind.
+ One input may be assigned to more than one output.
+
+* Switcher
+  A (video) switcher is one of the most downstream parts of a video
+  network. It includes one or more layers (M/E) performing switching as well
+  as transitons. It can combine several feeds into one, using keyers, DVE or
+  audio mixing.
+  A switcher is generally exposed to an operator.
+
+* Source
+  A source can be anything like a camera, computer graphics, media players
+
+  In the context of a matrix, a source is one single input port (or several, e.g. if Analog RGB is being switched)
+
+
+* Processor
+  A processor takes one or more input signals (feeds) and combines them to one
+  or more output feeds
+  Examples: keyers, matte generators, digital effects
+
+* Mnemonic
+  A mnemonic is a short hand name for one source/output feed
+  It is not required for technical operation but allows to have memorable
+  names instead of numbers
+
+* Feed
+  Any kind of signal, usually used to denote signals that are crossing device
+  boundaries.
+
+
+== REST API draft ==
+
+each router is represented as a set of URI-adressable ressources
+more than one matrix can be combined using adequate paths
+
+
+All following entries will be in subdirs of a specific matrix the server exposes to the (tcp/ip) network
+
+/info - generic device info and overall status
+
+    GET
+	    gets the general status of the switcher
+		The returned object MUST at least have the following data
+
+        {
+            "id"     : <int>,
+            "uid"    : <id that can be chosen freely but should be unique within network>
+		    "name"   : "user assigned name",
+			"online" : <true/false>,
+			"inputs" : <int>,
+			"outputs": <int>,
+			"interface": <string>
+		}
+
+    interface types
+	"sdi", "component", "composite", "audio", "422", ...
+
+    POST
+	not valid
+
+/input
+
+    GET
+	    info for all inputs, to be returned in list form
+		concatenating the per input objects as described below
+
+    POST
+	    invalid
+
+/input/<id>
+
+    id starts at 0
+	GET
+	input info
+	{
+	    "id" : <int>, (readonly)
+		"name" : <long, descriptive name>,
+		"mnemonic": <mnemonic>,
+		"uid": <id string that should be kept identical when reorganizing the network>
+	}
+
+    POST
+	elements name, mnemonic and uid are read/write
+
+    May include optional elements
+	"tally" (readonly)
+	Tally status for input
+	- empty or zero: no tally
+	- 1 read
+	- 2 green
+	- 3 yellow
+	- any number above: undefined, may be extended by user
+	"format"
+	Video format on this port - if matrix can detect it
+
+/input/<id>/preview
+    on systems that support this, this uri shall return a preview picture for
+	this input
+
+/output
+    GET
+	returns a list of integers, giving the inputs assigned to
+	each output of the matrix. -1 means no connection
+
+    POST
+	accepts a list of objects that must be formed as follows
+	{
+	    "output" : <int>,
+		"input"  : <int>
+	}
+
+/output/<id>
+
+    GET
+	{
+	    "id" : <int>, (ro)
+		"uid": <user settable id>,
+		"name" : <descriptive name>,
+		"mnenonic" : <shorthand name>,
+		"input" :   <int>
+	}
+
+    may have optional r/w element "tally" (see above)
+	may have optional r/w element "lock" (boolean)
+	"lock"
+	In cases where a system consists of several routers with a limited number
+	of trunks between them, it may be neccessary to break up links no longer in
+	use. if lock is set to true or tally is anything except 0 links will
+	not be broken. A POST request might then be replied to with error an code
+
+    POST
+	fields "uid", "name", "mnemonic", "input" and "tally" (if exists) are r/w
+
+/output/<id>/preview
+    on systems that support this, this uri shall return a preview picture for
+	this output
+
+Router control server is responsible for propagating tally from output to input
+
+=== Message/Event API ===
+
+	In addition to the RESTful API there is a message based JSON-API that can be exposed
+	by either WebSocket, TCP or UDP
+
+	In TCP mode a double newline shall be considered as an end of message token.
+
+	the message API
+
+	Command message
+	Any message that is to trigger some kind of action that may change the status
+	of any node is considered as a command.
+	All commands MUST contain the the "command" field.
+	and MAY contain the "token" field.
+	The token field will be returned unchanged in a response to the command message.
+
+	The JSON data objects described above SHALL be contained in an object called
+	"data" to simplify code reuse between both APIs
+
+	The following commands MUST be implemented:
+
+	- info
+		Gets the matrix info data as in the HTTP API
+
+	- input-set
+	- input-get
+		Get/Set input information as in HTTP api
+	- output-get
+		Get output info/status
+	- output-set
+		Same as in HTTP api
+
+	The following commands SHOULD be implemented
+
+	- subscribe
+	- unsubscribe
+		Will subscribe to status changes of this matrix.
+		If subscribed the client will receive status updates for the connected
+		matrix. Messages contain essentially the same information as obtained by
+		input-get or output-get.
+		The returned objects may be incomplete and only contain the changed fields
+		to save network bandwidth.
+
+	Adressing multiple matrices
+	When more than one matrix is exposed to the network, the same base URIs as
+	in the HTTP api shall be used when establishing a websocket connection.
+	When using tcp or udp connections, commands MUST include the field "target-uid"
+	and status messages will contain "from-uid".

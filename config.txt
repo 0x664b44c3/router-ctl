@@ -1,0 +1,276 @@
+[
+{
+	"type":"switcher",
+	"uid":"dfs-700",
+	"driver":"sony-dfs",
+	"inputs": [
+	{"id": "in1", "mnemonic":"IN1"},
+	{"id": "in2", "mnemonic":"IN2"},
+	{"id": "in3", "mnemonic":"IN3"},
+	{"id": "in4", "mnemonic":"IN4"},
+	{"id": "in5", "mnemonic":"IN5"},
+	{"id": "in6", "mnemonic":"IN6"},
+	{"id": "in7", "mnemonic":"IN7"},
+	{"id": "in8", "mnemonic":"IN8"}
+	]
+},
+{
+	"type": "panel",
+	"uid": "vd1602cp",
+	"driver": "vikinx:16x2",
+	"connection": "/dev/ttyUSB4",
+	"level": 1
+},
+{
+	"type": "matrix",
+	"uid": "vd3232",
+	"driver": "vikinx:32x32",
+	"connection": "/dev/ttyUSB4",
+	"level": 1
+},
+
+
+{
+	"uid": "main-studio",
+	"driver": "json",
+	"connection": "bts-venus.intra",
+	"level": 1,
+	"inputs":
+	[
+		{
+			"mnemonic": "KAM1",
+			"name":     "Lokal Kamera 1"
+		},
+		{
+			"mnemonic": "KAM2",
+			"name":     "Lokal Kamera 2"
+		},
+		{
+			"mnemonic": "KAM3",
+			"name":     "Lokal Kamera 3"
+		},
+		{
+			"mnemonic": "KAM4",
+			"name":     "Lokal Kamera 4"
+		},
+		{
+			"mnemonic": "KAM5",
+			"name":     "Mobil 1"
+		},
+		{
+			"mnemonic": "KAM6",
+			"name":     "Mobil 2"
+		},
+		{
+			"mnemonic": "KAM7",
+			"name":     "Mobil 3"
+		},
+		{
+			"mnemonic": "KAM8",
+			"name":     "Mobil 4"
+		},
+		{
+			"mnemonic": "MAZ1",
+			"name":     "DVCPro MAZ 1"
+		},
+		{
+			"mnemonic": "MAZ2",
+			"name":     "DVCPro MAZ 2"
+		},
+		{
+			"mnemonic": "MAZ3",
+			"name":     "IMX MAZ"
+		},
+		{
+			"mnemonic": "MAZ4",
+			"name":     "BetaSP MAZ"
+		},
+		{
+			"mnemonic": "PS 1",
+			"name":     "Playout Server 1"
+		},
+		{
+			"mnemonic": "PS 2",
+			"name":     "Playout Server 2"
+		},
+		{
+			"mnemonic": "TBC1",
+			"name":     "TimeBase Corr 1"
+		},
+		{
+			"mnemonic": "TBC2",
+			"name":     "TimeBase Corr 2"
+		},
+		{
+			"mnemonic": "VT 1",
+			"name":     "Ext Studio 1"
+		},
+		{
+			"mnemonic": "VT 2",
+			"name":     "Ext Studio 2"
+		},
+		{
+			"mnemonic": "VT 3",
+			"name":     "Ext Studio 3"
+		},
+		{
+			"mnemonic": "VT 4",
+			"name":     "Ext Studio 4"
+		},
+		{
+			"mnemonic": "AUX1",
+			"name":     ""
+		},
+		{
+			"mnemonic": "AUX2",
+			"name":     ""
+		},
+		{
+			"mnemonic": "AUX3",
+			"name":     ""
+		},
+		{
+			"mnemonic": "AUX4",
+			"name":     ""
+		},
+		{
+			"mnemonic": "BARS",
+			"name":     "Bars & Tone"
+		},
+		{
+			"mnemonic": "Clock",
+			"name":     "Clock"
+		},
+		{
+			"mnemonic": "DK1F",
+			"name":     "DSK1 Fill"
+		},
+		{
+			"mnemonic": "DK1K",
+			"name":     "DSK1 Key"
+		},
+		{
+			"mnemonic": "TIKR",
+			"name":     "Ticker Fill"
+		},
+		{
+			"mnemonic": "TIKK",
+			"name":     "Ticker Key"
+		},
+		{
+			"mnemonic": "PGM",
+			"name":     "DD PGM"
+		},
+		{
+			"mnemonic": "MPST",
+			"name":     "DD PST"
+		},
+		{
+			"mnemonic": "ME1 PGM",
+			"name":     ""
+		},
+		{
+			"mnemonic": "ME1 PST",
+			"name":     ""
+		},
+		{
+			"mnemonic": "ME2 PGM",
+			"name":     ""
+		},
+		{
+			"mnemonic": "ME2 PST",
+			"name":     ""
+		},
+		{
+			"mnemonic": "DD AUX1",
+			"name":     ""
+		},
+		{
+			"mnemonic": "DD AUX2",
+			"name":     ""
+		},
+		{
+			"mnemonic": "DD AUX3",
+			"name":     ""
+		},
+		{
+			"mnemonic": "DD AUX4",
+			"name":     ""
+		},
+		{
+			"mnemonic": "Air Mon",
+			"name": "RF Monitor",
+			"lock": "0-23"
+		}
+	],
+	"outputs":
+		[
+		"DD In 1",
+		"DD In 2",
+		"DD In 3",
+		"DD In 4",
+		"DD In 5",
+		"DD In 6",
+		"DD In 7",
+		"DD In 8",
+		"DD In 9",
+		"DD In 10",
+		"DD In 11",
+		"DD In 12",
+		"DD In 13",
+		"DD In 14",
+		"DD In 15",
+		"DD In 16",
+		"DD In 17",
+		"DD In 18",
+		"DD In 19",
+		"DD In 20",
+		"DD In 21",
+		"DD In 22",
+		"DD In 23",
+		"DD In 24",
+		"DVC MAZ1 In",
+		"DVC MAZ2 In",
+		"IMX MAZ In",
+		"BetaSP MAZ In",
+		"Assign Monitor 1",
+		"Assign Monitor 2",
+		"Assign Monitor 3",
+		"Source Row Mon 1.1",
+		"Source Row Mon 1.2",
+		"Source Row Mon 2.1",
+		"Source Row Mon 2.2",
+		"Source Row Mon 3.1",
+		"Source Row Mon 3.2",
+		"Aux Mon 1",
+		"Aux Mon 2",
+		"Aux Mon 3",
+		"Aux Mon 4",
+		"Aux Mon 5",
+		"Aux Mon 6",
+		"Aux Mon 7",
+		"Audio Desk PGM",
+		"Audio Desk Feed 1",
+		"Audio Desk Feed 2",
+		"Audio Desk Feed 3",
+		"Audio Desk Feed 4",
+		"Multiview 1",
+		"Multiview 2",
+		"Multiview 3",
+		"Multiview 4",
+		"MAZ Operator PGM",
+		"",
+		"",
+		"",
+		"",
+		"",
+		"",
+		"LED Wall Feed",
+		"Encoder 1",
+		"Encoder 2",
+		"Master Failsafe Feed"
+	]
+]
+
+
+
