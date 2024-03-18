@@ -40,6 +40,8 @@ protected:
     QString mDriverName;
     void setChannel(QIODevice * iodev);
     int mConnectionType;
+    QString mUser;
+    QString mPass;
 
 private:
     //comms functions

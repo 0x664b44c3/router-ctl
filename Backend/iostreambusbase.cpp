@@ -53,7 +53,7 @@ bool IOStreamBusDriverBase::connectBus()
         auto port = new QSerialPort(this);
         QString devPath = url.host() + url.path();
         port->setPortName(devPath);
-        int baud = DEFAULT_BAUD; //defualt for leitch panacea
+        int baud = DEFAULT_BAUD; //default for leitch panacea
         if (url.hasQuery())
         {
             QUrlQuery query(url);

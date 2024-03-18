@@ -35,6 +35,8 @@ LeitchBusDriver::LeitchBusDriver(QString busId, QObject * parent) :
     t->start();
     connect(t, &QTimer::timeout, this, &LeitchBusDriver::onTimer);
     mDriverName = DRIVER_NAME;
+    mUser = "leitch";
+    mPass = "leitchadmin";
 }
 
 bool LeitchBusDriver::rescanBus()
@@ -119,13 +121,13 @@ void LeitchBusDriver::processRx(const QByteArray & d)
             if (mChannel)
             {
                 mLogonStage = LogonStage::UserSent;
-                mChannel->write("leitch\r");
+                mChannel->write(mUser.toLatin1() + "\r");
             }
         } else if (currentLine.contains("pass") && (mLogonStage == LogonStage::UserSent)) {
             if (mChannel)
             {
                 mLogonStage = LogonStage::PassSent;
-                mChannel->write("leitchadmin\r");
+                mChannel->write(mPass.toLatin1() + "\r");
             }
         }
     }

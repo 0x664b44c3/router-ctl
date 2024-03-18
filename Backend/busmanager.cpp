@@ -6,6 +6,7 @@
 #include <QJsonValue>
 
 #include "leitchbusdriver.h"
+#include "quartzprotocol.h"
 #include "objectfactory.h"
 
 #include <QTimer>
@@ -28,7 +29,7 @@ BusManager::BusManager(QObject *parent)
 
     qDebug()<<"Load upstream (matrix) bus drivers";
     FactoryImpl<AbstractBusDriver, LeitchBusDriver>::registerToFactory(mDriverFactory, "leitch");
-    mDriverFactory->registerClass("leitch", nullptr);
+    FactoryImpl<AbstractBusDriver, QuartzProtocolDriver>::registerToFactory(mDriverFactory, "quartz");
     mDriverFactory->registerClass("quartz", nullptr);
     mDriverFactory->registerClass("gvg-ascii", nullptr);
     mDriverFactory->registerClass("videohub", nullptr);

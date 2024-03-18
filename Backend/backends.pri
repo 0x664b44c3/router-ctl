@@ -9,7 +9,8 @@ SOURCES +=\
          $$PWD/busmanager.cpp \
          $$PWD/iostreambusbase.cpp \
          $$PWD/leitchbusdriver.cpp \
-         $$PWD/quartzrouter.cpp \
+         $$PWD/matrix.cpp \
+         $$PWD/quartzprotocol.cpp \
          $$PWD/routermanager.cpp
 
 HEADERS += \
@@ -17,5 +18,6 @@ HEADERS += \
          $$PWD/busmanager.h \
          $$PWD/iostreambusbase.h \
          $$PWD/leitchbusdriver.h \
-         $$PWD/quartzrouter.h \
+         $$PWD/matrix.h \
+         $$PWD/quartzprotocol.h \
          $$PWD/routermanager.h
