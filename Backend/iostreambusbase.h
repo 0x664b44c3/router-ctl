@@ -28,7 +28,7 @@ namespace Router {
 class IOStreamBusDriverBase : public AbstractBusDriver
 {
 public:
-    IOStreamBusDriverBase(QString busId, QObject * = nullptr);
+    IOStreamBusDriverBase(QString busId, QObject * = nullptr, quint16 defaultport = 23);
 
     bool connectBus() override;
     void disconnectBus() override;
@@ -42,7 +42,7 @@ protected:
     int mConnectionType;
     QString mUser;
     QString mPass;
-
+    quint16 mDefaultPort;
 private:
     //comms functions
     //must be implemented by derived class, gets called by this class

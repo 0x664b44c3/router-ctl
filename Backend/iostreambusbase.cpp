@@ -22,12 +22,13 @@
 
 namespace Router {
 
-IOStreamBusDriverBase::IOStreamBusDriverBase(QString busId, QObject * parent) :
+IOStreamBusDriverBase::IOStreamBusDriverBase(QString busId, QObject * parent, quint16 defaultport) :
     AbstractBusDriver(busId, parent),
     mChannel(nullptr),
     mTelnet(nullptr),
     mDriverName("generic-stream"),
-    mConnectionType(connNone)
+    mConnectionType(connNone),
+    mDefaultPort(defaultport)
 {
 
 }
@@ -86,7 +87,7 @@ bool IOStreamBusDriverBase::connectBus()
     {
         QTcpSocket *socket = nullptr;
         QHostAddress host = QHostAddress(url.host());
-        quint16      port = url.port(23);
+        quint16      port = url.port(mDefaultPort);
         bool useTelnet = (scheme == "telnet");
         if (useTelnet)
         {

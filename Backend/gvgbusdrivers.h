@@ -20,17 +20,14 @@ class TelnetClient;
 
 namespace Router {
 
-class LeitchBusDriver : public IOStreamBusDriverBase
+class TenXlAsciiBusDriver : public IOStreamBusDriverBase
 {
 public:
-    LeitchBusDriver(QString busId, QObject * = nullptr);
+    TenXlAsciiBusDriver(QString busId, QObject * = nullptr);
 
     // AbstractBusDriver interface
 public:
     bool rescanBus() override;
-    QString driverName() const override;
-    QString driverInfo() const override;
-
 
 public slots:
     void setXPoint(int addr, int level, int dst, int src) override;
@@ -72,6 +69,7 @@ private slots:
 private:
     TelnetClient * mTelnet;
 };
+
 
 }
 #endif // LEITCHBUSDRIVER_H

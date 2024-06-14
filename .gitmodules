@@ -1,0 +1,3 @@
+[submodule "submodules/fastcgi"]
+	path = submodules/fastcgi
+	url = https://github.com/0x664b44c3/fast_cgi_qt.git

@@ -31,6 +31,9 @@ public:
      */
     virtual bool isOnline() const = 0;
 
+    virtual QString driverName() const;
+    virtual QString driverInfo() const;
+
 public slots:
     virtual void setXPoint(int addr, int level, int dst, int src) = 0;
     virtual void queryRouter(int addr, int level) = 0;

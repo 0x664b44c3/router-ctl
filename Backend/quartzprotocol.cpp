@@ -47,6 +47,18 @@ bool QuartzProtocolDriver::rescanBus()
     return true;
 }
 
+QString QuartzProtocolDriver::driverName() const
+{
+    return QStringLiteral("Evertz/Quartz");
+}
+
+QString QuartzProtocolDriver::driverInfo() const
+{
+    return QStringLiteral(
+        "Driver for older Evertz Quartz series routers.\n"
+        );
+}
+
 void QuartzProtocolDriver::queryRouter(int addr, int level)
 {
     Q_UNUSED(addr);

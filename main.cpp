@@ -33,18 +33,12 @@
  *    control software to the system
  **/
 #include <QCoreApplication>
-//#include <webserver.h>
-#include "videomatrixemu.h"
-//#include "networkvikinxmatrix.h"
-#include <QSerialPort>
+
 #include <QDebug>
 #include <QTimer>
 
 #include "routercore.h"
-#include "quartzrouter.h"
 #include <umdcontroller.h>
-
-#include "leitchbusdriver.h"
 
 #include <QFile>
 #include <QJsonArray>
@@ -52,7 +46,13 @@
 #include <QJsonValue>
 #include <QJsonDocument>
 
+#include <QTextStream>
+
 #include <busmanager.h>
+#include <abstractbusdriver.h>
+#include <matrix.h>
+
+#include "panelserver.h"
 void debugMessageHandler(QtMsgType mType, const QMessageLogContext & ctx, const QString & msg)
 {
     Q_UNUSED(ctx)
@@ -92,6 +92,42 @@ void debugMessageHandler(QtMsgType mType, const QMessageLogContext & ctx, const 
 }
 
 
+void showConfig(QTextStream & stream) {
+
+    stream << "Config info:\n\n";
+    stream << "BUSSES:\n";
+
+    auto busMgr = Router::BusManager::inst();
+    auto busNames = busMgr->getBusIds();
+
+    for(auto id: std::as_const(busNames))
+    {
+        stream << "  ";
+        auto bus = busMgr->bus(id);
+        stream << "Bus "<< id<<" ";
+        if (!bus)
+        {
+            stream << "not loaded.\n";
+            continue;
+        }
+        stream << "(" << bus->driverName() << "): ";
+        if (bus->isOnline())
+            stream << "ONLINE ";
+        else
+            stream << "OFFLINE ";
+        int alm = busMgr->alarmsForBus(id);
+        if (alm)
+            stream << "ALM: 0x"<<QString::number(alm,16);
+        else
+            stream << "OK";
+        stream << "\n";
+
+    }
+
+
+    stream.flush();
+}
+
 
 
 int main(int argc, char *argv[])
@@ -99,34 +135,6 @@ int main(int argc, char *argv[])
 	QCoreApplication a(argc, argv);
 
     qInstallMessageHandler(debugMessageHandler);
-
-    RouterCore core;
-//	QuartzRouter quartz;
-
-//	Webserver ws(&a);
-//	ws.setStaticPath(":/wwwdata/");
-//	ws.setIndexDoc("index.htm");
-//	NetworkVikinxMatrix mtx(0, &a);
-
-	QSerialPort ser("/dev/ttyUSB4", &a);
-	ser.setBaudRate(19200);
-	if (!ser.open(QIODevice::ReadWrite))
-	{
-		qDebug()<<"Could not open port";
-	}
-//	mtx.setIODevice(&ser);
-//	mtx.queryStatus();
-//	QTimer t;
-//	t.setInterval(100);
-////		t.start();
-//	QObject::connect(&t, SIGNAL(timeout()), &mtx, SLOT(test()));
-
-//	for (int i=0;i<16;++i)
-//		mtx.assign(i, i);
-
-//	return a.exec();
-    //core.testcase();
-    //qDebug()<<UMDController::formatUMD("%time% has no extra %% in it sinc %hour%:%minute%");
 
     qInfo()<<"Starting up";
     Router::BusManager::inst();
@@ -159,8 +167,16 @@ int main(int argc, char *argv[])
 //        return 1;
     }
     Router::BusManager::inst()->load(busses);
+    QJsonObject routers = jd.object().value("routers").toObject();
+    Router::Matrix mtx(routers.begin().key());
+    if (routers.size())
+        qDebug() << mtx.loadConfig(routers.begin().value().toObject());
+    QTextStream(stderr)<<QJsonDocument(mtx.getConfig()).toJson();
 
+    BMD::PanelServer bmdPanelServer;
 
+    QTextStream stream(stdout);
+    showConfig(stream);
 
     return a.exec();
 }

@@ -1,5 +1,5 @@
-#ifndef LEITCHBUSDRIVER_H
-#define LEITCHBUSDRIVER_H
+#ifndef BMD_VIDEOHUB_DRIVER_H
+#define BMD_VIDEOHUB_DRIVER_H
 
 #include <QObject>
 
@@ -14,23 +14,20 @@ class QTcpSocket;
 class QSerialPort;
 QT_END_NAMESPACE
 
-class TelnetClient;
-
 #include "iostreambusbase.h"
 
 namespace Router {
 
-class LeitchBusDriver : public IOStreamBusDriverBase
+class BmdBusDriver : public IOStreamBusDriverBase
 {
 public:
-    LeitchBusDriver(QString busId, QObject * = nullptr);
+    BmdBusDriver(QString busId, QObject * = nullptr);
 
     // AbstractBusDriver interface
 public:
     bool rescanBus() override;
     QString driverName() const override;
     QString driverInfo() const override;
-
 
 public slots:
     void setXPoint(int addr, int level, int dst, int src) override;
@@ -57,21 +54,23 @@ private:
     /// true if a prompt character was detected
     bool mHasPrompt;
 
-    bool checkBufferForPromt() const;
+    bool checkBufferForAck() const;
 
 
     QElapsedTimer mTimeSinceCmd;
     QByteArray mBuffer;
 
     LogonStage mLogonStage;
+
+    int mCurrentRun;
 private slots:
     void onTimer();
     void onChannelConnected();
     void onChannelDisconnected();
 
 private:
-    TelnetClient * mTelnet;
+
 };
 
 }
-#endif // LEITCHBUSDRIVER_H
+#endif // BMD_VIDEOHUB_DRIVER_H

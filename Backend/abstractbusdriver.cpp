@@ -35,4 +35,14 @@ void AbstractBusDriver::setBusId(const QString &newBusId)
 {
     mBusId = newBusId;
 }
+
+QString AbstractBusDriver::driverName() const
+{
+    return QStringLiteral("abstract bus i/f");
+}
+
+QString AbstractBusDriver::driverInfo() const
+{
+    return QStringLiteral("abstract base driver class");
+}
 }

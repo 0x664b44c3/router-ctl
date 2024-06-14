@@ -27,12 +27,13 @@ DISTFILES += \
 
 
 include($$PWD/RouterEngine/router_engine.pri)
-include($$PWD/Backend/backends.pri)
+include($$PWD/Backend/backend.pri)
 include($$PWD/Telnet/telnet.pri)
 
-qtHaveModule(websockets) {
-    include($$PWD/Frontend/proto/websocket.pri)
-}
+include($$PWD/ControlServer/control_server.pri)
+
+include($$PWD/Frontend/frontend.pri)
+
 
 
 RESOURCES += \

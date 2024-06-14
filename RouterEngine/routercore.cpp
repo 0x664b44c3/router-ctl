@@ -5,7 +5,13 @@
 
 using namespace Router;
 
-void recurseLinks(const QMap<QString, QString> map, QString master, int indent=0)
+bool Router::dirIsValid(Port::Direction d) {
+    if ((d == Port::Direction::Source) || (d == Port::Direction::Destination))
+        return true;
+    return false;
+}
+
+void recurseLinks(const QMap<QString, QStringList> map, QString master, int indent=0)
 {
     QString output;
     if (indent>10)
@@ -19,10 +25,9 @@ void recurseLinks(const QMap<QString, QString> map, QString master, int indent=0
     output += master;
     qDebug().noquote() << output;
 
-    QStringList linkList = map.values(master);
+    QStringList linkList = map.value(master);
     foreach(QString linked, linkList)
     {
-
         recurseLinks(map, linked, indent+1);
     }
 }
@@ -31,17 +36,18 @@ void recurseLinks(const QMap<QString, QString> map, QString master, int indent=0
 
 void RouterCore::debugLinks()
 {
-    qDebug().noquote() << "Linked ports:";
-    QStringList rootlevel;
-    foreach (QString port, mLinkedPorts.keys()) {
-        if (mLinkedPorts.values().contains(port))
-            continue;
-        if (rootlevel.contains(port))
-            continue;
-        rootlevel << port;
-        recurseLinks(mLinkedPorts, port, 0);
-    }
-    qDebug() << "";
+    //FIXME: redo this once linked ports have been refactored
+    // qDebug().noquote() << "Linked ports:";
+    // QStringList rootlevel;
+    // foreach (QString port, mLinkedPorts.keys()) {
+    //     if (mLinkedPorts.values().contains(port))
+    //         continue;
+    //     if (rootlevel.contains(port))
+    //         continue;
+    //     rootlevel << port;
+    //     recurseLinks(mLinkedPorts, port, 0);
+    // }
+    // qDebug() << "";
 }
 
 QDebug operator<<(QDebug debug, const Router::Request &req)
@@ -151,7 +157,7 @@ QList<Router::Request> RouterCore::findRoute(QString destinationID, QString sour
     {
         if (ttl>0)
         {
-            QStringList links = mLinkedPorts.values(destinationID);
+            QStringList links = mLinkedPorts.value(destinationID);
             foreach(QString link, links)
                 route << findRoute(link, sourceID, ttl - 1);
         }
@@ -165,16 +171,8 @@ QList<Router::Request> RouterCore::findRoute(QString destinationID, QString sour
 
 void RouterCore::clearLinksForTarget(QString target)
 {
-    for (auto it = mLinkedPorts.begin(); it != mLinkedPorts.end();)
-    {
-        if (it.value() == target)
-        {
-            qDebug()<<"breaking link for"<<target;
-            it = mLinkedPorts.erase(it);
-        }
-        else
-            ++it;
-    }
+    for (QStringList & links: mLinkedPorts)
+        links.removeAll(target);
 }
 
 bool RouterCore::isDestinationLocked(Router::Endpoint ep, QString uid) const
@@ -199,7 +197,7 @@ bool RouterCore::isDestinationLocked(Router::Endpoint ep, QStringList excludeUID
         linkedPortsFound = false;
         foreach (QString id, effectiveUIDs)
         {
-            QStringList linkedPorts = mLinkedPorts.values(id);
+            QStringList linkedPorts = mLinkedPorts.value(id);
             foreach(QString port, linkedPorts)
             {
                 if (effectiveUIDs.contains(port))
@@ -227,7 +225,7 @@ int RouterCore::clearLocks(QString endpoint, QString locker)
     return 0;
 }
 
-/** dijksta's algorithm */
+/** use dijkstra's algorithm here*/
 void RouterCore::findBestRoute(QString destinationRouter, QString sourceRouter)
 {
 
@@ -248,7 +246,7 @@ QMap<QString, Router::Endpoint> RouterCore::destinations() const
     QMap<QString, Router::Endpoint> ret;
     for(auto it = mPorts.begin(); it!=mPorts.end();++it)
     {
-        if (it->direction == Port::Destination)
+        if (it->direction == Port::Direction::Destination)
             ret.insert(it.key(), *it);
     }
     return ret;
@@ -272,7 +270,11 @@ QStringList RouterCore::traceLinkChain(QString destination, int maxRecursion)
         qDebug()<<"Warning: recursion limit reached during backtracking linked ports";
         return chain;
     }
-    QString master = mLinkedPorts.key(destination);
+
+    //NOTE: the list of port links should be inverted as any port can only be linked to a single other port
+    //this avoids all the mess currently in here with string lists etc
+    //FIXME: this is non-functional for the time being
+    QString master ; //= mLinkedPorts.key(destination);
     if (master.isEmpty())
         return chain;
     chain << master;
@@ -304,12 +306,12 @@ void RouterCore::testcase()
         for (int i=0;i<32;++i)
         {
             {
-                Router::Endpoint ep(Port::Source, rtr.uid, i);
+                Router::Endpoint ep(Port::Direction::Source, rtr.uid, i);
                 ep.mnemonic = QString("Input %1.%2").arg(j).arg(i);
                 mPorts.insert(QString("in-test-%1.%2").arg(j).arg(i), ep);
             }
             {
-                Router::Endpoint ep(Port::Destination, rtr.uid, i);
+                Router::Endpoint ep(Port::Direction::Destination, rtr.uid, i);
                 ep.mnemonic = QString("Output %1.%2").arg(j).arg(i);
                 mPorts.insert(QString("out-test-%1.%2").arg(j).arg(i), ep);
             }
@@ -362,8 +364,8 @@ void RouterCore::testcase()
 bool RouterCore::registerTie(QString sourcePort, QString destPort, int penalty)
 {
     //source/destination are swapped here
-    Router::Endpoint srcEP = findEndpoint(sourcePort, Port::Destination);
-    Router::Endpoint dstEP = findEndpoint(destPort, Port::Source);
+    Router::Endpoint srcEP = findEndpoint(sourcePort, Port::Direction::Destination);
+    Router::Endpoint dstEP = findEndpoint(destPort, Port::Direction::Source);
     if ((srcEP.isNull()|| dstEP.isNull()))
         return false;
     //ties on the same router make no sense
@@ -383,7 +385,7 @@ void RouterCore::requestRoute(QString destination, QString source)
     qDebug() << "Request route from source" << source
              << "to destination" << destination;
     QList<Router::Request> route;
-    Router::Endpoint dstEP = findEndpoint(destination, Port::Destination);
+    Router::Endpoint dstEP = findEndpoint(destination, Port::Direction::Destination);
     if (dstEP.isNull())
     {
         qDebug()<<"Destination"<<destination<<"not found";
@@ -394,7 +396,7 @@ void RouterCore::requestRoute(QString destination, QString source)
 
     if (destinationUIDs().contains(source))
     {
-        Router::Endpoint srcEP = findEndpoint(source, Port::Destination);
+        Router::Endpoint srcEP = findEndpoint(source, Port::Direction::Destination);
         if (srcEP.isNull())
         {
             qDebug()<<"Destination"<<source<<"unknown while trying to link";
@@ -411,7 +413,8 @@ void RouterCore::requestRoute(QString destination, QString source)
         }
         else
         {
-            mLinkedPorts.insertMulti(source, destination);
+            //FIXME: rewrite this to be the opposite way round
+            //mLinkedPorts.insertMulti(source, destination);
             qDebug()<<"Destination" << destination
                      << "now linked to" <<source;
             QString effectiveSourceID = mConnectionTable.value(source);
@@ -455,7 +458,7 @@ QMap<QString, Router::Endpoint> RouterCore::sources() const
     QMap<QString, Router::Endpoint> ret;
     for(auto it = mPorts.begin(); it!=mPorts.end();++it)
     {
-        if (it->direction == Port::Source)
+        if (it->direction == Port::Direction::Source)
             ret.insert(it.key(), *it);
     }
     return ret;

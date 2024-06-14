@@ -7,8 +7,9 @@
 
 #include "leitchbusdriver.h"
 #include "quartzprotocol.h"
+#include "bmd_videohub_driver.h"
 #include "objectfactory.h"
-
+#include <iostream>
 #include <QTimer>
 
 #include <QCoreApplication>
@@ -30,15 +31,19 @@ BusManager::BusManager(QObject *parent)
     qDebug()<<"Load upstream (matrix) bus drivers";
     FactoryImpl<AbstractBusDriver, LeitchBusDriver>::registerToFactory(mDriverFactory, "leitch");
     FactoryImpl<AbstractBusDriver, QuartzProtocolDriver>::registerToFactory(mDriverFactory, "quartz");
-    mDriverFactory->registerClass("quartz", nullptr);
-    mDriverFactory->registerClass("gvg-ascii", nullptr);
-    mDriverFactory->registerClass("videohub", nullptr);
+    // mDriverFactory->registerClass("gvg-ascii", nullptr);
+    FactoryImpl<AbstractBusDriver, BmdBusDriver>::registerToFactory(mDriverFactory, "videohub");
     mDriverFactory->registerClass("network", nullptr);
 }
 
 int BusManager::alarms() const
 {
     return mAlarmState;
+}
+
+int BusManager::alarmsForBus(QString busId) const
+{
+    return 0;
 }
 
 void BusManager::debugBusState() const
@@ -63,14 +68,14 @@ void BusManager::debugBusState() const
     }
 }
 
-AbstractBusDriver *BusManager::getBus(QString id) const
+AbstractBusDriver *BusManager::bus(QString id) const
 {
     if (!mBusses.contains(id))
         return nullptr;
     return mBusses.value(id).bus;
 }
 
-QStringList BusManager::busIds() const
+QStringList BusManager::getBusIds() const
 {
     return mBusses.keys();
 }
@@ -123,7 +128,10 @@ void BusManager::onTimer()
     if (showBusState)
     {
         if (alms)
+        {
             qWarning()<<"Bus Alarms present";
+            std::cerr << "\a" << std::flush;
+        }
         debugBusState();
         // }
         // QJsonObject

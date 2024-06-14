@@ -1,4 +1,4 @@
-#include "leitchbusdriver.h"
+#include "gvgbusdrivers.h"
 #include <QIODevice>
 #include <QDebug>
 #include <QTimer>
@@ -27,43 +27,43 @@
 
 namespace Router {
 
-LeitchBusDriver::LeitchBusDriver(QString busId, QObject * parent) :
+TenXlAsciiBusDriver::TenXlAsciiBusDriver(QString busId, QObject * parent) :
     IOStreamBusDriverBase(busId, parent)
 {
     auto t = new QTimer(this);
     t->setInterval(1000);
     t->start();
-    connect(t, &QTimer::timeout, this, &LeitchBusDriver::onTimer);
+    connect(t, &QTimer::timeout, this, &TenXlAsciiBusDriver::onTimer);
     mDriverName = DRIVER_NAME;
     mUser = "leitch";
     mPass = "leitchadmin";
 }
 
-bool LeitchBusDriver::rescanBus()
+bool TenXlAsciiBusDriver::rescanBus()
 {
     for(int level=0;level<16;++level)
         queryRouter(0, level);
     return true;
 }
 
-void LeitchBusDriver::queryRouter(int addr, int level)
+void TenXlAsciiBusDriver::queryRouter(int addr, int level)
 {
     Q_UNUSED(addr);
     mCommandQueue << QString::asprintf("@ S?%x", level & 15);
     checkQueue();
 }
 
-void LeitchBusDriver::queryAlarms(int addr, int level)
+void TenXlAsciiBusDriver::queryAlarms(int addr, int level)
 {
 
 }
 
-bool LeitchBusDriver::checkBufferForPromt() const
+bool TenXlAsciiBusDriver::checkBufferForPromt() const
 {
     return mBuffer.endsWith(">") || mBuffer.endsWith("> ") ;
 }
 
-void LeitchBusDriver::setXPoint(int addr, int level, int dest, int source)
+void TenXlAsciiBusDriver::setXPoint(int addr, int level, int dest, int source)
 {
     Q_UNUSED(addr); //TODO: check with leitch spec if the frame address is used for anything
 
@@ -76,7 +76,7 @@ void LeitchBusDriver::setXPoint(int addr, int level, int dest, int source)
     checkQueue();
 }
 
-void LeitchBusDriver::checkQueue()
+void TenXlAsciiBusDriver::checkQueue()
 {
     if (!mChannel)
         return;
@@ -91,7 +91,7 @@ void LeitchBusDriver::checkQueue()
     mTimeSinceCmd.restart();
 }
 
-void LeitchBusDriver::processRx(const QByteArray & d)
+void TenXlAsciiBusDriver::processRx(const QByteArray & d)
 {
     mBuffer.append(d);
     int offset = 0;
@@ -138,7 +138,7 @@ void LeitchBusDriver::processRx(const QByteArray & d)
 }
 
 
-void LeitchBusDriver::parseLine(const QByteArray &l)
+void TenXlAsciiBusDriver::parseLine(const QByteArray &l)
 {
     if (l.size()<3)
         return; // most likely just a prompt char
@@ -199,7 +199,7 @@ void LeitchBusDriver::parseLine(const QByteArray &l)
 }
 
 
-void LeitchBusDriver::onTimer()
+void TenXlAsciiBusDriver::onTimer()
 {
     if (!mHasPrompt && mTimeSinceCmd.elapsed() >= CMD_TIMEOUT)
     {
@@ -226,7 +226,7 @@ void LeitchBusDriver::onTimer()
 }
 
 
-void LeitchBusDriver::onChannelConnected()
+void TenXlAsciiBusDriver::onChannelConnected()
 {
     mCommandQueue.clear();
     mCommandQueue << "@ ?";
@@ -251,7 +251,7 @@ void LeitchBusDriver::onChannelConnected()
     }
 }
 
-void LeitchBusDriver::onChannelDisconnected()
+void TenXlAsciiBusDriver::onChannelDisconnected()
 {
 
 }
@@ -259,14 +259,3 @@ void LeitchBusDriver::onChannelDisconnected()
 
 } //namespace
 
-
-
-QString Router::LeitchBusDriver::driverName() const
-{
-    return QStringLiteral("Leitch/Panacea");
-}
-
-QString Router::LeitchBusDriver::driverInfo() const
-{
-    return QStringLiteral("Leitch Panacea Protocol driver");
-}

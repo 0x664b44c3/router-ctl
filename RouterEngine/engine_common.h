@@ -8,10 +8,11 @@
 namespace Router {
 
 namespace Port {
-    enum Direction
+    enum class Direction
     {
-        Source=0,
-        Destination=1
+        UnspecifiedDir=0,
+        Source,
+        Destination
     };
     struct Info
     {
@@ -20,6 +21,8 @@ namespace Port {
         QString mnemonic;
     };
 }
+
+    bool dirIsValid(Port::Direction d);
 
 struct Endpoint
 {

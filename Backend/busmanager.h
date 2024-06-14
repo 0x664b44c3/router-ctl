@@ -31,11 +31,12 @@ public:
 
     bool load(const QJsonObject &);
     int alarms() const;
+    int alarmsForBus(QString busId) const;
     void debugBusState() const;
+    QStringList getBusIds() const;
     
-    AbstractBusDriver * getBus(QString id) const;
+    AbstractBusDriver * bus(QString id) const;
     
-    QStringList busIds() const;
 private:
     explicit BusManager(QObject *parent = nullptr);
 

@@ -28,6 +28,8 @@ public:
     // AbstractBusDriver interface
 public:
     bool rescanBus() override;
+    QString driverName() const override;
+    QString driverInfo() const override;
 
 public slots:
     void setXPoint(int addr, int level, int dst, int src) override;
