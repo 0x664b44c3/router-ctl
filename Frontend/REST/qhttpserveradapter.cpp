@@ -76,6 +76,8 @@ bool REST::QHttpServerAdapter::handleRequest(QString url, const QHttpServerReque
         break;
     }
 
+    context.method = method;
+    context.methodString = methodString;
     QByteArray contentType;
     for(auto it = request.headers().begin(); it!= request.headers().end(); ++it)
     {
@@ -108,7 +110,10 @@ bool REST::QHttpServerAdapter::handleRequest(QString url, const QHttpServerReque
         return false;
 
 
-    context.response.headers["content-type"] = context.response.contentType.toLatin1();
+    if (context.response.contentType.isEmpty())
+        context.response.contentType = "text/plain";
+
+    context.response.headers["Content-Type"] = context.response.contentType.toLatin1();
 
 
     QHttpServerResponder::StatusCode code = QHttpServerResponder::StatusCode::BadRequest;
@@ -368,11 +373,19 @@ bool REST::QHttpServerAdapter::handleRequest(QString url, const QHttpServerReque
 
     };
 
+
+    context.response.headers.insert("Content-Length",
+                                    QString::number(context.response.data.size(), 10).toLatin1());
+
     responder.writeStatusLine(code);
+
     for(auto it = context.response.headers.begin(); it!=context.response.headers.end(); ++it)
     {
+        qDebug()<<it.key()<<*it;
         responder.writeHeader(it.key().toLatin1(), *it);
+
     }
+
     responder.writeBody(context.response.data);
     return ret;
 }

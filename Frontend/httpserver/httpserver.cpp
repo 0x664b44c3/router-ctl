@@ -200,12 +200,13 @@ bool HttpServer::handleRequest(const QHttpServerRequest &request, QHttpServerRes
 
     QUrl url = request.url();
     QString urlPath = url.path().toLower();
-    urlPath = urlPath.replace("..","");
+    urlPath = urlPath.replace("..", "");
 
     QString ressourcePath;
 
     HttpResponderInterface * rsp = nullptr;
 
+    bool keepPath = false;
     for(Handler rh: std::as_const(mUriHandlers))
     {
         if (match_uri(rh.url, urlPath))
@@ -222,7 +223,8 @@ bool HttpServer::handleRequest(const QHttpServerRequest &request, QHttpServerRes
             if (match_uri(rh.url, urlPath))
             {
                 ressourcePath = rh.url;
-                rsp = rh.responder;
+                rsp           = rh.responder;
+                keepPath      = rh.keepPath;
                 break;
             }
         }
@@ -234,20 +236,25 @@ bool HttpServer::handleRequest(const QHttpServerRequest &request, QHttpServerRes
     }
     else
     {
-        if (ressourcePath.endsWith('/'))
-            urlPath.remove(0, ressourcePath.length() - 1); //preserve the /
-        else
-            urlPath.remove(0, ressourcePath.lastIndexOf('/') - 1); //preserve the /
+        if (!keepPath)
+        {
+            if (ressourcePath.endsWith('/'))
+                urlPath.remove(0, ressourcePath.length() - 1); //preserve the /
+            else
+                urlPath.remove(0, ressourcePath.lastIndexOf('/') - 1); //preserve the /
+        }
 
-        // qDebug()<<"Calling handler for" << urlPath<<"from url"<<request.url().toString();
+        qDebug()<<"Calling handler for" << urlPath<<"from url"<<request.url().toString();
 
         bool ret = rsp->handleRequest(urlPath, request, responder);
         if (!ret)
         {
             badRequest(request, responder);
         }
+
         return true;
     }
+    return false;
 }
 
 
@@ -292,11 +299,12 @@ void HttpServer::notFound(const QHttpServerRequest &request, QHttpServerResponde
 }
 
 
-void HttpServer::registerHandler(QString url, HttpResponderInterface *responder)
+void HttpServer::registerHandler(QString url, HttpResponderInterface *responder, bool keepPath)
 {
     Handler h;
     h.url = url;
     h.responder = responder;
+    h.keepPath = keepPath;
     //put path handlers to the back, single uri handlers to the beginning
     if (url.endsWith('/'))
         mDirHandlers.append(h);

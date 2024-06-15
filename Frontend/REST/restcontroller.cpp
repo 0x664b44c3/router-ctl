@@ -26,23 +26,44 @@ static bool match_uri(QString exp, QString uri)
 
 bool Controller::handleRequest(QString url, HttpContext &context, QByteArray requestData)
 {
+    // qDebug()<<"REST"<<url<<context.methodString;
     for(RessourceInfo rh: std::as_const(mRessources))
     {
         if (match_uri(rh.url, url))
         {
+            // qDebug()<<"matched on"<<rh.url;
             if ((rh.methodMask == AnyMethod) || (context.method & rh.methodMask))
             {
-                return rh.rsrc->handleRequest(url, context, requestData);
+                if (!rh.rsrc)
+                {
+                    genericHttpError(500,context);
+                    return true;
+                }
+                // qDebug()<<"delegate ressource";
+
+                if (rh.url.endsWith('/'))
+                    url.remove(0, rh.url.length() - 1); //preserve the /
+                else
+                    url.remove(0, rh.url.lastIndexOf('/') - 1); //preserve the /
+
+                bool ok = rh.rsrc->handleRequest(url, context, requestData);
+                if (!ok)
+                {
+                    genericHttpError(501, context);
+                }
+                return true;
             }
             else
             {
+                // qDebug()<<"invalid method"<<context.method;
                 context.response.data = "bad request.";
                 context.response.statusCode = Http::statusBadRequest;
                 return true;
             }
         }
     }
-    return false;
+    notFound(context);
+    return true;
 }
 
 void Controller::registerRessource(QString url, RessourceInterface * rsrc, Method methods)
@@ -84,6 +105,16 @@ void Controller::notFound(HttpContext &ctx)
     ctx.response.data = "Not found.";
 }
 
+void Controller::genericHttpError(int code, HttpContext &ctx)
+{
+    ctx.response.contentType = "text/plain";
+    ctx.response.statusCode = code;
+    QString rsp;
+    rsp = QString::number(code, 10) + Http::statusString(code);
+
+    ctx.response.data = rsp.toUtf8();
+}
+
 QStringList Controller::urlMatches() const
 {
     QStringList matches;
@@ -91,6 +122,7 @@ QStringList Controller::urlMatches() const
     {
         matches<<rh.url;
     }
+    return matches;
 }
 
 } // namespace REST

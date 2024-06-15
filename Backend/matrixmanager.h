@@ -32,6 +32,8 @@ public:
     QJsonObject getConfig();
     int alarms() const;
 
+    QStringList getUids() const;
+
 
 private:
 
@@ -43,8 +45,8 @@ private:
 
     bool mDebug;
 
-signals:
-    void xPointChanged(
+private slots:
+    void onXPointChanged(
         QString busId,
         int addr, int level, int dst, int src);
 

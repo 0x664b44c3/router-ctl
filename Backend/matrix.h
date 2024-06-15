@@ -36,7 +36,9 @@ public:
     };
 
     static QJsonObject serializePortInfo(const PortInfo & i);
-    static Matrix::PortInfo deserialzePortInfo(const QJsonObject &obj, bool *ok=nullptr);
+    static PortInfo deserialzePortInfo(const QJsonObject &obj, bool *ok=nullptr);
+
+    QJsonArray getRouting_Json() const;
 
     explicit Matrix(QString id, QObject *parent = nullptr);
 
@@ -86,6 +88,9 @@ public slots:
     /// @brief unlockPort - unlocks a port on the router
     void unlockPort(int dest);
 
+    void onXPointChanged(QString busId,
+                         int addr, int level, int dst, int src);
+
 signals:
     void xPointChanged(int dest, int source);
     void labelChanged(Port::Direction dir, int id, QString label);
@@ -99,6 +104,7 @@ private:
     QString mId;
     QVector<PortInfo> mInputs;
     QVector<PortInfo> mOutputs;
+    QVector<int> mRouting;
     QVector<PortInfo> & portList(Port::Direction);
 };
 

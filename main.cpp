@@ -52,8 +52,12 @@
 #include <abstractbusdriver.h>
 #include <matrixmanager.h>
 
+#include <routerressource.h>
 #include <httpserver.h>
 #include <staticfileserver.h>
+#include <restcontroller.h>
+#include <qhttpserveradapter.h>
+
 #include <QUrl>
 void debugMessageHandler(QtMsgType mType, const QMessageLogContext & ctx, const QString & msg)
 {
@@ -143,6 +147,18 @@ int main(int argc, char *argv[])
     HttpServer srv(&a);
     staticFileServer fs(":/webui", &a);
     srv.registerHandler("/", &fs);
+    REST::Controller rsc(&a);
+    REST::QHttpServerAdapter adapter(QPointer<REST::Controller>(&rsc), &a);
+
+
+
+    rsc.registerRessource("/router/", new RouterBaseRessource(&rsc, &a));
+    rsc.registerRessource("/bus/", nullptr);
+    rsc.registerRessource("/panel/", nullptr);
+    QString apiBase="";
+
+    for (auto path: rsc.urlMatches())
+        srv.registerHandler(path, &adapter, true);
 
     qInfo()<<"Loading configuration";
 

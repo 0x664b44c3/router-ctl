@@ -37,9 +37,10 @@ public:
     virtual bool handlePost   (QString url, HttpContext & context, QByteArray data);
     virtual bool handleDelete (QString url, HttpContext & context, QByteArray data);
     virtual bool handlePatch  (QString url, HttpContext & context, QByteArray data);
+    explicit SplitMethodRessourceInterface(Controller * controller) : RessourceInterface{controller} {}
 };
 
-bool delegateRequest(SplitMethodRessourceInterface *, QUrl url, HttpContext & context, QByteArray requestBody);
+bool delegateRequest(SplitMethodRessourceInterface *, QString url, HttpContext & context, QByteArray requestBody);
 
 }
 #endif // RESTRESSOURCEINTERFACE_H

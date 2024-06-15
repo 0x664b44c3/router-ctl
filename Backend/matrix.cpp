@@ -57,6 +57,14 @@ Matrix::PortInfo Matrix::deserialzePortInfo(const QJsonObject & obj, bool * ok)
     return info;
 }
 
+QJsonArray Matrix::getRouting_Json() const
+{
+    QJsonArray routing;
+    for(auto i: std::as_const(mRouting))
+        routing<<i;
+    return routing;
+}
+
 Matrix::Matrix(QString id, QObject *parent)
     : QObject{parent}, mId(id)
 {}
@@ -129,6 +137,20 @@ void Matrix::unlockPort(int dest)
     //FIXME: not implemented
 }
 
+void Matrix::onXPointChanged(QString busId, int addr, int level, int dst, int src)
+{
+    if (busId != mBusId)
+        return;
+    if (addr !=mFrameId)
+        return;
+    if (level!=mLevel)
+        return;
+    if ((dst<0) || (dst>=mOutputs.size()))
+        return;
+    mRouting[dst] = src;
+    emit xPointChanged(dst, src);
+}
+
 QVector<Matrix::PortInfo> &Matrix::portList(Port::Direction dir)
 {
     auto & list = mInputs;
@@ -191,6 +213,7 @@ void Matrix::resize(int dests, int srcs)
 {
     mInputs.resize(srcs);
     mOutputs.resize(dests);
+    mRouting.resize(dests);
     assignIds(false);
 }
 

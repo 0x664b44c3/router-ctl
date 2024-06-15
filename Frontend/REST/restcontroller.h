@@ -57,6 +57,8 @@ public:
      */
     static void notFound(HttpContext & ctx);
 
+    static void genericHttpError(int code, HttpContext & ctx);
+
     QStringList urlMatches() const;
 
 signals:

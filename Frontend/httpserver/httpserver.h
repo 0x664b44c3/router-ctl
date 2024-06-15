@@ -23,7 +23,7 @@ public:
     static void badRequest(const QHttpServerRequest &request, QHttpServerResponder &responder);
     static void notFound(const QHttpServerRequest &request, QHttpServerResponder &responder);
 
-    void registerHandler(QString url, HttpResponderInterface * responder);
+    void registerHandler(QString url, HttpResponderInterface * responder, bool keepPath = false);
 signals:
 
     // QAbstractHttpServer interface
@@ -33,6 +33,7 @@ protected:
     struct Handler {
         QString url;
         HttpResponderInterface * responder;
+        bool keepPath;
     };
     QList<Handler> mDirHandlers;
     QList<Handler> mUriHandlers;

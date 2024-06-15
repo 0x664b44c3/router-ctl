@@ -22,4 +22,9 @@ MatrixManager::MatrixManager(QObject *parent)
 
 }
 
+void MatrixManager::onXPointChanged(QString busId, int addr, int level, int dst, int src)
+{
+
+}
+
 } // namespace Router
