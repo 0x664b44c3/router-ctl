@@ -6,13 +6,18 @@
 
 class MimeDB {
 public:
-	explicit MimeDB(const QString defaultMIME = "application/octet-stream");
 	void addExtension(QString ext, QString mime);
 	QString mime(QString fileName) const;
+    void setDefaultMimeType(QString);
 	void setupDefaultTypes();
+    static MimeDB * inst();
+    QString defaultMimeType() const;
+
 private:
-	QHash<QString, QString> m_Types;
-	QString m_Default;
+    explicit MimeDB(const QString defaultMIME = "application/octet-stream");
+    static MimeDB *mInst;
+    QHash<QString, QString> mTypes;
+    QString mDefaultMimeType;
 };
 
 #endif // MIMEDB_H

@@ -50,8 +50,9 @@ protected:
 	QMap<QString, QString> mConnectionTable;
     QList<Router::TieLine> mTieLines;
 
-    //if port <key> is changed change port <value> as well
-    QMap<QString, QStringList> mLinkedPorts;
+    //holds a map of [port]=>[linked to], when a port in a value changes, the port in key also is changed
+    QMap<QString, QString> mLinkedPorts;
+
     bool isDestinationLocked(Router::Endpoint ep, QString excludeUID) const;
     bool isDestinationLocked(Router::Endpoint ep, QStringList excludeUIDs=QStringList()) const;
 	void setLock(QString endpoint, QString locker);

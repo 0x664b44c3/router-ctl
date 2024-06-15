@@ -50,9 +50,11 @@
 
 #include <busmanager.h>
 #include <abstractbusdriver.h>
-#include <matrix.h>
+#include <matrixmanager.h>
 
-#include "panelserver.h"
+#include <httpserver.h>
+#include <staticfileserver.h>
+#include <QUrl>
 void debugMessageHandler(QtMsgType mType, const QMessageLogContext & ctx, const QString & msg)
 {
     Q_UNUSED(ctx)
@@ -124,7 +126,6 @@ void showConfig(QTextStream & stream) {
 
     }
 
-
     stream.flush();
 }
 
@@ -139,6 +140,9 @@ int main(int argc, char *argv[])
     qInfo()<<"Starting up";
     Router::BusManager::inst();
 
+    HttpServer srv(&a);
+    staticFileServer fs(":/webui", &a);
+    srv.registerHandler("/", &fs);
 
     qInfo()<<"Loading configuration";
 
@@ -166,14 +170,12 @@ int main(int argc, char *argv[])
         qInfo()<<"No interactive configuration possible yet. terminating.";
 //        return 1;
     }
-    Router::BusManager::inst()->load(busses);
+    // Router::BusManager::inst()->load(busses);
     QJsonObject routers = jd.object().value("routers").toObject();
     Router::Matrix mtx(routers.begin().key());
     if (routers.size())
         qDebug() << mtx.loadConfig(routers.begin().value().toObject());
     QTextStream(stderr)<<QJsonDocument(mtx.getConfig()).toJson();
-
-    BMD::PanelServer bmdPanelServer;
 
     QTextStream stream(stdout);
     showConfig(stream);

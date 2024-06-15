@@ -1,5 +1,7 @@
 <RCC>
     <qresource prefix="/">
         <file>webui/error_page.html</file>
+        <file>webui/index.html</file>
+        <file>webui/web_panel.html</file>
     </qresource>
 </RCC>

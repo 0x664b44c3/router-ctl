@@ -1,7 +1,18 @@
-DEFINES+=WITH_QT_HTTP_SERVER
+INCLUDEPATH+=$$PWD
 
 HEADERS += \
-    $$PWD/restcontroller.h
+    $$PWD/rest_types.h \
+    $$PWD/restcontroller.h \
+    $$PWD/restressourceinterface.h
 
 SOURCES += \
-    $$PWD/restcontroller.cpp
+    $$PWD/restcontroller.cpp \
+    $$PWD/restressourceinterface.cpp
+
+
+qtHaveModule(httpserver) {
+HEADERS += \
+    $$PWD/qhttpserveradapter.h
+SOURCES += \
+    $$PWD/qhttpserveradapter.cpp
+}

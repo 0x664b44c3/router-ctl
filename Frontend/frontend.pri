@@ -9,10 +9,15 @@ include($$PWD/../submodules/fastcgi/fastcgi/fastcgi.pri)
 include($$PWD/REST/rest-frontend.pri)
 
 # include a REST server based on QHttpServer module
-qtHaveModule(httpserver) {
-   include($$PWD/httpserver/httpserver.pri)
-}
+include($$PWD/httpserver/httpserver.pri)
+
 
 qtHaveModule(websockets) {
     include($$PWD/websocket/websocket.pri)
 }
+
+HEADERS += \
+    $$PWD/../submodules/fastcgi/fcgiapp.h
+
+SOURCES += \
+    $$PWD/../submodules/fastcgi/fcgiapp.cpp

@@ -75,12 +75,12 @@ Router::Endpoint RouterCore::findEndpoint(QString endpointID, Port::Direction di
 }
 
 
-QList<Router::Request> RouterCore::findRoute(QString destinationID, QString sourceID, int ttl) const
+QList<Router::Request> RouterCore::findRoute(QString destinationId, QString sourceID, int ttl) const
 {
     QList<Router::Request> route;
     if (ttl<0)
         return route;
-    Router::Endpoint dstEP = findEndpoint(destinationID, Port::Direction::Destination);
+    Router::Endpoint dstEP = findEndpoint(destinationId, Port::Direction::Destination);
     Router::Endpoint srcEP = findEndpoint(sourceID, Port::Direction::Source);
     if ((dstEP.isNull()) || srcEP.isNull())
     {
@@ -92,7 +92,7 @@ QList<Router::Request> RouterCore::findRoute(QString destinationID, QString sour
         Router::Request req;
         req.routerUID = dstEP.routerUID;
         req.sourceUID = sourceID;
-        req.destinationUID = destinationID;
+        req.destinationUID = destinationId;
         req.setLocks.clear();
         route << req;
     }
@@ -129,7 +129,7 @@ QList<Router::Request> RouterCore::findRoute(QString destinationID, QString sour
             if (tieSource.isNull())
                 continue;
             //if the tie source port is already locked by another destination skip this as well
-            if (isDestinationLocked(tieSource, destinationID))
+            if (isDestinationLocked(tieSource, destinationId))
                 continue;
 
             //routing request assigning the tie port at the source router
@@ -137,14 +137,14 @@ QList<Router::Request> RouterCore::findRoute(QString destinationID, QString sour
             tieRequest.routerUID = tie.sourceRouterID;
             tieRequest.sourceUID = sourceID;
             tieRequest.destinationUID = tie.sourcePortID;
-            tieRequest.setLocks << destinationID;
+            tieRequest.setLocks << destinationId;
             route << tieRequest;
 
             //routing request on destination router
             Router::Request mainRequest;
             mainRequest.routerUID = dstEP.routerUID;
             mainRequest.sourceUID = tie.destinationPortID;
-            mainRequest.destinationUID = destinationID;
+            mainRequest.destinationUID = destinationId;
             mainRequest.setLocks.clear();
             route << mainRequest;
 
@@ -153,26 +153,25 @@ QList<Router::Request> RouterCore::findRoute(QString destinationID, QString sour
         qDebug()<<"FIXME: Cannot really route between matrices in this version, only halve-arsed implementation ATM";
     }
 
-    if (mLinkedPorts.contains(destinationID))
+    QStringList linkedPorts = mLinkedPorts.keys(destinationId);
+
+    if (ttl>0)
     {
-        if (ttl>0)
-        {
-            QStringList links = mLinkedPorts.value(destinationID);
-            foreach(QString link, links)
-                route << findRoute(link, sourceID, ttl - 1);
-        }
-        else
-        {
-            qDebug()<< "maximum route search depth exceeded";
-        }
+        foreach(QString linkedDest, linkedPorts)
+            route << findRoute(linkedDest, sourceID, ttl - 1);
     }
+    else
+    {
+        qDebug()<< "maximum route search depth exceeded";
+    }
+
     return route;
 }
 
+//FIXME: rework this, should remove all ports linked to this one
 void RouterCore::clearLinksForTarget(QString target)
 {
-    for (QStringList & links: mLinkedPorts)
-        links.removeAll(target);
+    // mLinkedPorts
 }
 
 bool RouterCore::isDestinationLocked(Router::Endpoint ep, QString uid) const
@@ -184,7 +183,6 @@ bool RouterCore::isDestinationLocked(Router::Endpoint ep, QStringList excludeUID
 {
     if (ep.lockedBy.isEmpty())
         return false;
-    QStringList effectiveUIDs = excludeUIDs;
     bool linkedPortsFound = true;
     int rounds=10; //prevent endless loops if data corrupt (loops in link table)
     while(linkedPortsFound)
@@ -195,20 +193,20 @@ bool RouterCore::isDestinationLocked(Router::Endpoint ep, QStringList excludeUID
             break;
         }
         linkedPortsFound = false;
-        foreach (QString id, effectiveUIDs)
+        foreach (QString id, excludeUIDs)
         {
-            QStringList linkedPorts = mLinkedPorts.value(id);
+            QStringList linkedPorts = mLinkedPorts.keys(id);
             foreach(QString port, linkedPorts)
             {
-                if (effectiveUIDs.contains(port))
+                if (excludeUIDs.contains(port))
                     continue;
                 linkedPortsFound = true;
-                effectiveUIDs.push_back(port);
+                excludeUIDs.push_back(port);
             }
         }
     }
     QStringList locks = ep.lockedBy;
-    foreach (QString id, effectiveUIDs)
+    foreach (QString id, excludeUIDs)
         locks.removeAll(id);
     if (ep.lockedBy.isEmpty())
         return false;
@@ -392,7 +390,7 @@ void RouterCore::requestRoute(QString destination, QString source)
         return;
     }
     //any new route will break an active link
-    clearLinksForTarget(destination);
+    mLinkedPorts.remove(destination);
 
     if (destinationUIDs().contains(source))
     {

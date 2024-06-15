@@ -1,13 +1,15 @@
-#include "httpinterface.h"
+#include "httpserver.h"
 #include <QDebug>
 #include <QHttpServerRequest>
 #include <QHttpServerResponder>
 #include <QHttpServerRouter>
 #include <QFile>
 
+#include "mimedb.h"
 
+#include "httpresponderinterface.h"
 
-static QMap<QString, QString> parseHeaderFields(const QByteArray hdr)
+QMap<QString, QString> HttpServer::parseHeaderFields(const QByteArray hdr)
 {
     QMap<QString, QString> data;
     bool inQuote=false;
@@ -48,7 +50,7 @@ static QMap<QString, QString> parseHeaderFields(const QByteArray hdr)
     return data;
 }
 
-static QMap<QString, QByteArray> parseFormData(QByteArray contentType, QByteArray data)
+QMap<QString, QByteArray> HttpServer::parseFormData(QByteArray contentType, QByteArray data)
 {
     QMap<QString, QByteArray> formData;
 
@@ -137,7 +139,7 @@ static QMap<QString, QByteArray> parseFormData(QByteArray contentType, QByteArra
                     int idx = line.indexOf(';', 20);
                     if (idx<0)
                         continue;
-                    QString disposition = QString::fromLocal8Bit( line.mid(20, idx-20).trimmed());
+                    QString disposition = QString::fromLatin1(line.mid(20, idx-20).trimmed());
                     auto headers = parseHeaderFields(line.mid(idx).trimmed());
                     if (!headers.contains("name")) // parts with no name are ignored.
                         break;
@@ -165,30 +167,91 @@ static QMap<QString, QByteArray> parseFormData(QByteArray contentType, QByteArra
     return formData;
 }
 
-HttpInterface::HttpInterface(QObject *parent)
+HttpServer::HttpServer(QObject *parent)
     : QAbstractHttpServer{parent}
 {
-    qDebug() << listen(QHostAddress::Any, 8080);
+    MimeDB::inst();
+    qDebug() <<"Web server listen: "<< listen(QHostAddress::Any, 8080);
     mIndexPage = "/web/web_panel.html";
 }
 
-HttpInterface::~HttpInterface()
+HttpServer::~HttpServer()
 {
 
 }
 
-bool HttpInterface::handleRequest(const QHttpServerRequest &request, QHttpServerResponder &responder)
+static bool match_uri(QString exp, QString uri)
+{
+    if (exp.endsWith('/'))
+    { // match subdirs of path when exp is a path (ending with /)
+        if ((uri.startsWith(exp)) || (uri + "/" == exp))
+            return true;
+    }
+    else
+    {
+        if (uri == exp)
+            return true;
+    }
+    return false;
+}
+
+bool HttpServer::handleRequest(const QHttpServerRequest &request, QHttpServerResponder &responder)
 {
 
     QUrl url = request.url();
     QString urlPath = url.path().toLower();
     urlPath = urlPath.replace("..","");
-    qDebug()<<urlPath;
-    return false;
 
+    QString ressourcePath;
+
+    HttpResponderInterface * rsp = nullptr;
+
+    for(Handler rh: std::as_const(mUriHandlers))
+    {
+        if (match_uri(rh.url, urlPath))
+        {
+            ressourcePath = rh.url;
+            rsp = rh.responder;
+            break;
+        }
+    }
+
+    if (!rsp) {
+        for(Handler rh: std::as_const(mDirHandlers))
+        {
+            if (match_uri(rh.url, urlPath))
+            {
+                ressourcePath = rh.url;
+                rsp = rh.responder;
+                break;
+            }
+        }
+    }
+
+    if (!rsp)
+    {
+        return false;
+    }
+    else
+    {
+        if (ressourcePath.endsWith('/'))
+            urlPath.remove(0, ressourcePath.length() - 1); //preserve the /
+        else
+            urlPath.remove(0, ressourcePath.lastIndexOf('/') - 1); //preserve the /
+
+        // qDebug()<<"Calling handler for" << urlPath<<"from url"<<request.url().toString();
+
+        bool ret = rsp->handleRequest(urlPath, request, responder);
+        if (!ret)
+        {
+            badRequest(request, responder);
+        }
+        return true;
+    }
 }
 
-void HttpInterface::missingHandler(const QHttpServerRequest &request, QHttpServerResponder &&responder)
+
+void HttpServer::missingHandler(const QHttpServerRequest &request, QHttpServerResponder &&responder)
 {
     QHttpServerResponder::StatusCode code = QHttpServerResponder::StatusCode::NotFound;
     QMap<QString, QString> vars;
@@ -197,12 +260,58 @@ void HttpInterface::missingHandler(const QHttpServerRequest &request, QHttpServe
     vars["error"] = "Not found.";
     vars["title"] = vars["code"] + " - " + vars["error"];
     vars["message"] = "The URL &quot;" + path + "&quot; was not found on this server.";
-    auto data = getPage("error_page.html", vars);
+    auto data = getPageTemplate("error_page.html", vars);
     responder.write(data,"text/html", code);
 }
 
 
-QByteArray HttpInterface::getPage(QString page, QMap<QString, QString> variables)
+void HttpServer::badRequest(const QHttpServerRequest &request, QHttpServerResponder &responder)
+{
+    QHttpServerResponder::StatusCode code = QHttpServerResponder::StatusCode::BadRequest;
+    QMap<QString, QString> vars;
+    QString path = request.url().path().toHtmlEscaped();
+    vars["code"] = QString::asprintf("%03d", (int)code);
+    vars["error"] = "Bad request.";
+    vars["title"] = vars["code"] + " - " + vars["error"];
+    vars["message"] = "The URL &quot;" + path + "&quot; cannot be accessed using this method.";
+    auto data = getPageTemplate("error_page.html", vars);
+    responder.write(data,"text/html", code);
+}
+
+void HttpServer::notFound(const QHttpServerRequest &request, QHttpServerResponder &responder)
+{
+    QHttpServerResponder::StatusCode code = QHttpServerResponder::StatusCode::NotFound;
+    QMap<QString, QString> vars;
+    QString path = request.url().path().toHtmlEscaped();
+    vars["code"] = QString::asprintf("%03d", (int)code);
+    vars["error"] = "Not found.";
+    vars["title"] = vars["code"] + " - " + vars["error"];
+    vars["message"] = "The URL &quot;" + path + "&quot; was not found on this server.";;
+    auto data = getPageTemplate("error_page.html", vars);
+    responder.write(data,"text/html", code);
+}
+
+
+void HttpServer::registerHandler(QString url, HttpResponderInterface *responder)
+{
+    Handler h;
+    h.url = url;
+    h.responder = responder;
+    //put path handlers to the back, single uri handlers to the beginning
+    if (url.endsWith('/'))
+        mDirHandlers.append(h);
+    else
+        mUriHandlers.append(h);
+
+    //sort list with stable sort to put shorter matches to the end
+
+
+    std::stable_sort(mDirHandlers.begin(), mDirHandlers.end(), [](const Handler & a, const Handler & b){return a.url.length()>=b.url.length();});
+
+}
+
+
+QByteArray HttpServer::getPageTemplate(QString page, QMap<QString, QString> variables)
 {
     page = page.replace("..", "");
     QFile file(":/webui/" + page);

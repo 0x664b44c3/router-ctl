@@ -1,0 +1,366 @@
+<!DOCTYPE html>
+<!-- Last edit: 2024-01-06 -->
+<html lang="en">
+<head>
+    <meta charset="utf-8">
+    <title>Router Web UI</title>
+    <style>
+    div.buttonRow {
+        max-width:1200pt;
+    }
+    div.buttonGrp{
+        display: inline-block;
+    }
+    span.btn {
+        padding-left:2pt;
+        padding-right: 2pt;
+        width: 64pt;
+        margin: 2px;
+        display: inline-block;
+        text-align: center;
+        margin-bottom: 12pt;
+        padding-bottom: 2pt;
+        border-bottom: none;
+    }
+    span.btn.act {
+        border-bottom: 2pt solid green;
+    }
+    
+    span.btn span.label {
+        display: block;
+        border-bottom: 1px solid gray;
+        margin-bottom: 4pt;
+    }
+    span.btn button {
+        min-width: 95%;
+        min-height:32pt;
+        background-color: #e0e0e0;
+    }
+    span.btn.dst button.sel {
+        background-color: #80ff80;
+    }
+    
+    span.btn.dst button.lock {
+        background-color: #ff8080;
+    }
+    
+    span.btn.src button.sel {
+        background-color: #ffff80;
+    }
+
+    span.tally
+    {
+        color: #e0e0e0;
+    }
+
+    span.tally.red
+    {
+        color: #ff0000;
+    }
+
+    span.tally.green
+    {
+        color: #00ff00;
+    }
+    span.tally.both
+    {
+        color: #ff0000;
+    }
+    span.tally.both :nth-child(2)
+    {
+        color: #00ff00;
+    }
+    </style>
+</head>
+<body>
+<div class="panel">
+<h2>Matrix 1</h2>
+<h3>Outputs</h3>
+<div class = "buttonRow" id="p0_dst">
+</div>
+<hr>
+<h3>Inputs</h3>
+<div class = "buttonRow" id="p0_src">
+</div>
+<script >
+function btnHtml(dir, id, text)
+{
+    //'<!--<span class="label">Out ' + text +  '</span>-->' +
+    return '<span class="btn ' + dir + '" id="span_' + id +'">\n' +
+    '<span class="tally" id="tally_' + id +'"><span>&#9679;</span>&nbsp;<span>&#9679;</span>&nbsp;<span>&#9679;</span></span><br>' +
+    '<button id="'+id+'">' + text + '</button>\n' +
+    '</span>\n';
+}
+
+function addButtons(xbar, num_src, num_dst)
+{
+    var dstButtons = document.getElementById(xbar+"_dst");
+    var srcButtons = document.getElementById(xbar+"_src");
+    dstButtons.innerHTML="";
+    srcButtons.innerHTML="";
+
+    var html='<div class="buttonGrp">';
+    for(var i=0;i<num_dst;++i)
+    {
+    if (i>1 && (i&7)==0)
+        html+='</div><div class=\"buttonGrp\">';
+    html+=btnHtml("dst", xbar + "_dst"+i, statusObj.destinations[i].label);
+    }
+    html+="</div>";
+
+    dstButtons.innerHTML = html;
+
+    html='<div class="buttonGrp">';
+    for(var i=0;i<num_src;++i)
+    {
+    if (i>1 && (i&7)==0)
+        html+='</div><div class=\"buttonGrp\">';
+    html+=btnHtml("src", xbar + "_src"+i, statusObj.sources[i].label);
+    }
+    html+="</div>";
+    srcButtons.innerHTML = html;
+}
+
+function assignClickEvent(xbar, num_src, num_dst)
+{
+  for(var i=0;i<num_dst;++i)
+    {
+        var btn = document.getElementById(xbar + "_dst" + i);
+        if (btn===null)
+            continue;
+        btn.addEventListener('click', 
+          fnBtnClickDst.bind(null, 
+            xbar, i
+            ));
+    }
+  for(var i=0;i<num_src;++i)
+    {
+        var btn = document.getElementById(xbar + "_src" + i);
+        if (btn===null)
+            continue;
+        btn.addEventListener('click', 
+          fnBtnClickSrc.bind(null, 
+            xbar, i
+            ));
+    }
+}
+
+var currentOutput = -1;
+
+function fnBtnClickDst(mtx, key)
+{
+    selectSource(mtx, -1);
+    selectDest(mtx, key);
+    selectSource(mtx, statusObj.xpoint[key]);
+    console.log("XBar: " + mtx + "\nDest: " +  + key);
+}
+
+function fnBtnClickSrc(mtx, key)
+{
+    selectSource(mtx, key);
+    statusObj.xpoint[state[mtx].dst] = key;
+    postXPoint(state[xbar].dst, key);
+    console.log("XBar: " + mtx + "\nSource: " +  + key);
+}
+
+function sourceIdx(id)
+{
+    for(var i=0;i<nsrc;++i)
+    {
+        if (statusObj.sources[i].id == id)
+            return 1;
+    }
+    return -1;
+}
+
+function selectSource(mtx, src)
+{
+  var oldSrc = state[xbar].src;
+  if(src != oldSrc)
+  {
+    var oldBtn = document.getElementById(xbar + "_src" + oldSrc);
+    var newBtn = document.getElementById(xbar + "_src" + src);
+    if (oldBtn!==null)
+      oldBtn.classList.remove("sel");
+    if (newBtn!==null)
+      newBtn.classList.add("sel");
+    state[xbar].src = src;
+    console.log("Change source from " + oldSrc + " to " + src);
+  }
+}
+
+function selectDest(mtx, dst)
+{
+  var oldDst = state[xbar].dst;
+  if(dst != oldDst)
+  {
+    var oldBtn = document.getElementById(xbar + "_dst" + oldDst);
+    var newBtn = document.getElementById(xbar + "_dst" + dst);
+    if (oldBtn!==null)
+      oldBtn.classList.remove("sel");
+    if (newBtn!==null)
+      newBtn.classList.add("sel");
+    state[xbar].dst = dst;
+    console.log("Change destination from " + oldDst + " to " + dst);
+  }
+}
+
+function updateActive(buttonId, active)
+{
+    var container = document.getElementById("span_" + buttonId);
+    if (container === null)
+        return;
+    if (active)
+        container.classList.add("act");
+    else
+        container.classList.remove("act");
+}
+
+function updateTally(buttonId, tally)
+{
+    var leds = document.getElementById("tally_" + buttonId);
+    if (leds === undefined)
+        return;
+    if (leds === null)
+        return;
+    leds.classList.remove("red");
+    leds.classList.remove("green");
+    leds.classList.remove("both");
+    tally = tally & 3;
+    if ((tally & 3) == 1) {
+        leds.classList.add("red");
+    } else if (tally == 2) {
+        leds.classList.add("green");
+    } else if (tally == 3) {
+        leds.classList.add("both");
+    } // elso: no tally
+}
+
+var initialPanelUpdate = true;
+
+var nsrc = 0;
+var ndst = 0;
+var xbar = "p0";
+var statusObj = null;
+function clearUi()
+{
+    nsrc = 0;
+    ndst = 0;
+    xbar = "p0";
+    addButtons(xbar, nsrc,ndst);
+}
+
+function panelUpdate()
+{
+    if (this.readyState == 4)
+    {
+        if (this.status != 200)
+        {
+            alert("backend error");
+        }
+        else
+        {
+            try {
+            statusObj = JSON.parse(this.responseText);
+            } catch(e)
+            {
+                console.log("Error: " + e);
+                return;
+            }
+
+            //initialize the UI
+            if (statusObj.sources === undefined)
+                return;
+            if (statusObj.destinations === undefined)
+                return;
+            if (initialPanelUpdate) {
+                nsrc = dv(statusObj.sources.length, 0);
+                ndst = dv(statusObj.destinations.length, 0);
+                addButtons(xbar, nsrc,ndst);
+                assignClickEvent(xbar, nsrc,ndst);
+                initialPanelUpdate = false;
+            }
+
+            var cDest = state[xbar].dst;
+            if (cDest>=0)
+            {
+                selectSource(xbar, statusObj.xpoint[cDest]);
+            }
+
+            //update tallies
+            var sources = statusObj.sources;
+            var destinations = statusObj.sources;
+            var mtx = xbar;
+            if ( ( undefined !== sources) && ( undefined !== destinations) )
+            {
+                for(var i = 0; i < sources.length; ++i)
+                {
+                    var id = mtx + "_src"+i;
+                    if (sources[i].tally === undefined)
+                        break;
+                    updateTally(id, sources[i].tally);
+                    updateActive(id, sources[i].active);
+                }
+
+                for(var i = 0; i < destinations.length; ++i)
+                {
+                    var id = mtx + "_dst"+i;
+                    if (sources[i].tally === undefined)
+                        break;
+                    updateTally(id, destinations[i].tally);
+                }
+            }
+        }
+    }
+}
+
+function queryStatus()
+{
+    var xhr = new XMLHttpRequest();
+    xhr.open('GET', apiUrl+"/status", true);
+    xhr.onload = panelUpdate;
+    xhr.onerror = function() { setTimeout("queryStatus()",'10000'); console.log("Request failed. Retry in 10s");};
+    xhr.send();
+}
+
+function postXPoint(dst, src)
+{
+    var xhr = new XMLHttpRequest();
+    xhr.open('POST', apiUrl+"/set", true);
+    var data = new FormData();
+    data.append('mtx', xbar);;
+    data.append('dst', dst);
+    data.append('src', src);
+    xhr.onload = queryStatus;
+    xhr.onerror = function() { console.log("Request failed."); };
+    xhr.send(data);
+}
+
+//load some UI
+clearUi();
+
+var panel_id="";
+
+var getRequest = new XMLHttpRequest();
+var apiUrl = window.location.protocol + "//" + window.location.host + "/router";
+if (panel_id.length>0)
+{
+    apiUrl+="/"+panel_id;
+}
+
+//clear UI
+
+var state = [];
+state[xbar]= {src:-1, dst:-1};
+
+function dv(val, def)
+{
+    if ((val === null) || (val === undefined))
+        return def;
+    return val;
+}
+console.log("Querying panel status");
+setInterval("queryStatus()",'100');
+queryStatus();
+</script>
+</body>
