@@ -21,9 +21,7 @@ HEADERS += \
 
 DISTFILES += \
 	 remote_control_protocol.txt \
-    defaultconfig.ini \
-    config.txt \
-    wwwdata/ui.html
+    config.txt
 
 
 include($$PWD/RouterEngine/router_engine.pri)
@@ -36,7 +34,6 @@ include($$PWD/Frontend/frontend.pri)
 
 
 
-RESOURCES += \
-    ressources.qrc
+RESOURCES +=
 
 STATECHARTS +=

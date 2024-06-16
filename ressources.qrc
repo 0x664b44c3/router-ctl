@@ -1,8 +1,0 @@
-<RCC>
-    <qresource prefix="/">
-        <file alias="inifile">defaultconfig.ini</file>
-    </qresource>
-    <qresource prefix="/wwwdata">
-        <file alias="index.htm">wwwdata/ui.html</file>
-    </qresource>
-</RCC>
