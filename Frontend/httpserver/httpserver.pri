@@ -23,8 +23,5 @@ SOURCES += \
     $$PWD/httpresponderinterface.cpp \
     $$PWD/httpserver.cpp
 
-RESOURCES += \
-    $$PWD/webui.qrc
-
 }
 

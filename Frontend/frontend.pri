@@ -21,3 +21,13 @@ HEADERS += \
 
 SOURCES += \
     $$PWD/../submodules/fastcgi/fcgiapp.cpp
+
+
+#webui ressources
+RESOURCES += \
+    $$PWD/webui.qrc
+
+DISTFILES += \
+    $$PWD/webui/error_page.html \
+    $$PWD/webui/index.html \
+    $$PWD/webui/web_panel.html
