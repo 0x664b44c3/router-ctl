@@ -1,20 +1,24 @@
+INCLUDEPATH+=$$PWD/interface
 INCLUDEPATH+=$$PWD
 
 HEADERS += \
-    $$PWD/rest_types.h \
-    $$PWD/restcontroller.h \
-    $$PWD/restressourceinterface.h \
-    $$PWD/routerressource.h
+    $$PWD/interface/rest_types.h \
+    $$PWD/interface/restcontroller.h \
+    $$PWD/interface/restressourceinterface.h
 
 SOURCES += \
-    $$PWD/restcontroller.cpp \
-    $$PWD/restressourceinterface.cpp \
+    $$PWD/interface/restcontroller.cpp \
+    $$PWD/interface/restressourceinterface.cpp
+
+HEADERS+=\
+    $$PWD/routerressource.h
+SOURCES+=\
     $$PWD/routerressource.cpp
 
 
 qtHaveModule(httpserver) {
 HEADERS += \
-    $$PWD/qhttpserveradapter.h
+    $$PWD/interface/qhttpserveradapter.h
 SOURCES += \
-    $$PWD/qhttpserveradapter.cpp
+    $$PWD/interface/qhttpserveradapter.cpp
 }

@@ -28,19 +28,24 @@ public:
 
     static MatrixManager *inst();
 
-    bool load(QJsonObject&);
+    bool load(const QJsonObject &);
     QJsonObject getConfig();
     int alarms() const;
 
-    QStringList getUids() const;
+    QStringList getRouterIds() const;
+    Matrix * router(QString uid);
 
+    ///
+    /// \brief reset - unloads all matrices
+    ///
+    void reset();
 
 private:
 
     explicit MatrixManager(QObject *parent = nullptr);
     static MatrixManager * mInst;
 
-    QMap<QString, Matrix> mRouters;
+    QMap<QString, Matrix*> mRouters;
     int mAlarmState;
 
     bool mDebug;
@@ -52,6 +57,10 @@ private slots:
 
 public slots:
 
+signals:
+    void routerDeleted(QString);
+    void newRouter(QString);
+    void routerModified(QString);
 };
 
 } // namespace Router

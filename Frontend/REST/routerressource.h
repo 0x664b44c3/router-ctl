@@ -2,7 +2,7 @@
 #define ROUTERRESSOURCE_H
 
 #include <QObject>
-#include "restressourceinterface.h"
+#include <restressourceinterface.h>
 
 class RouterBaseRessource : public QObject, public REST::SplitMethodRessourceInterface
 {
@@ -16,11 +16,10 @@ signals:
 public:
     bool handleRequest(QString url, REST::HttpContext &context, QByteArray requestBody);
 
-
-
     static void respondJson(const QJsonDocument &, REST::HttpContext &context, int code = 200);
     static void respondJson(const QJsonObject   &, REST::HttpContext &context, int code = 200);
     static void respondJson(const QJsonArray    &, REST::HttpContext &context, int code = 200);
+    static void respondJson(const QJsonValue    &, REST::HttpContext &context, int code = 200, const QString &key = "value");
 
     // SplitMethodRessourceInterface interface
 public:
@@ -30,6 +29,8 @@ public:
     bool handleDelete(QString url, REST::HttpContext &context, QByteArray data) override;
     bool handlePatch(QString url, REST::HttpContext &context, QByteArray data) override;
 
+protected:
+    QJsonObject routerStatus(QString id);
 };
 
 #endif // ROUTERRESSOURCE_H

@@ -104,13 +104,16 @@ void showConfig(QTextStream & stream) {
     stream << "BUSSES:\n";
 
     auto busMgr = Router::BusManager::inst();
+    auto mtxMgr = Router::MatrixManager::inst();
+
+    auto mtxNames = mtxMgr->getRouterIds();
     auto busNames = busMgr->getBusIds();
 
-    for(auto id: std::as_const(busNames))
+    for(auto busId: std::as_const(busNames))
     {
         stream << "  ";
-        auto bus = busMgr->bus(id);
-        stream << "Bus "<< id<<" ";
+        auto bus = busMgr->bus(busId);
+        stream << "Bus "<< busId<<" ";
         if (!bus)
         {
             stream << "not loaded.\n";
@@ -121,16 +124,38 @@ void showConfig(QTextStream & stream) {
             stream << "ONLINE ";
         else
             stream << "OFFLINE ";
-        int alm = busMgr->alarmsForBus(id);
+        int alm = busMgr->alarmsForBus(busId);
         if (alm)
             stream << "ALM: 0x"<<QString::number(alm,16);
         else
             stream << "OK";
         stream << "\n";
+        //get matrices on bus
 
+        for(auto mtxId: std::as_const(mtxNames))
+        {
+            auto mtx = mtxMgr->router(mtxId);
+            if (mtx->busId()!=busId)
+                continue;
+            stream << "    ";
+            stream << "Router "<< mtxId<<" ";
+            if (!mtx)
+            {
+                stream << "not loaded.\n";
+                continue;
+            }
+            stream << " "
+                   << mtx->numSources()
+                   << "x"
+                   << mtx->numDestinations()
+                   << " @"<<mtx->busAddr() <<":"<<mtx->level();
+            stream <<"\n";
+        }
+        if (mtxNames.isEmpty())
+            stream << "  (empty)\n";
+        stream.flush();
     }
 
-    stream.flush();
 }
 
 
@@ -184,17 +209,22 @@ int main(int argc, char *argv[])
     {
         qCritical()<<"No matrix busses were defined.";
         qInfo()<<"No interactive configuration possible yet. terminating.";
-//        return 1;
+        return 1;
     }
-    // Router::BusManager::inst()->load(busses);
+    if (!Router::BusManager::inst()->load(busses))
+    {
+        qCritical()<<"could not load any busses, see error messages for details";
+    }
     QJsonObject routers = jd.object().value("routers").toObject();
-    Router::Matrix mtx(routers.begin().key());
-    if (routers.size())
-        qDebug() << mtx.loadConfig(routers.begin().value().toObject());
-    QTextStream(stderr)<<QJsonDocument(mtx.getConfig()).toJson();
+    if (routers.isEmpty())
+    {
+        qCritical()<<"No matrix busses were defined.";
+        qInfo()<<"No interactive configuration possible yet. terminating.";
+        return 1;
+    }
+    Router::MatrixManager::inst()->load(routers);
 
     QTextStream stream(stdout);
     showConfig(stream);
-
     return a.exec();
 }

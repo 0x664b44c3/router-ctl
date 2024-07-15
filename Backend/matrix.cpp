@@ -1,35 +1,40 @@
 #include "matrix.h"
-#include <tuple>
+
 #include <QJsonArray>
 #include "busmanager.h"
 #include <abstractbusdriver.h>
-
-
-static bool checkValue(const QJsonObject & o, QString key, QJsonValue::Type t)
-{
-    if (!o.contains(key))
-        return false;
-    if (o[key].type() != t)
-        return false;
-    return true;
-}
-
-typedef std::tuple<QString, QJsonValue::Type> KeyAndType;
-
-static bool checkValues(const QJsonObject & o, std::list<KeyAndType > kt)
-{
-    for(auto const & t: kt)
-    {
-        QString key;
-        QJsonValue::Type type;
-        std::tie(key, type) = t;
-        if (!checkValue(o, key, type))
-            return false;
-    }
-    return true;
-}
+#include "json-utils.h"
 
 namespace Router {
+
+Matrix::PortInfo Matrix::portInfo(Port::Direction dir, int index) const
+{
+    if (index<0)
+        return PortInfo();
+    if (dir == Port::Direction::Source)
+    {
+        if (index>=mInputs.size())
+            return PortInfo();
+        return mInputs[index];
+    }
+    if (dir == Port::Direction::Destination)
+    {
+        if (index>=mOutputs.size())
+            return PortInfo();
+        return mOutputs[index];
+    }
+    return PortInfo();
+}
+
+int Matrix::numSources() const
+{
+    return mInputs.size();
+}
+
+int Matrix::numDestinations() const
+{
+    return mOutputs.size();
+}
 
 QJsonObject Matrix::serializePortInfo(const PortInfo &i)
 {
@@ -65,20 +70,38 @@ QJsonArray Matrix::getRouting_Json() const
     return routing;
 }
 
+int Matrix::getXPoint(int dest) const
+{
+    if ((dest<mFirstDest) || (dest>=(mFirstDest + numDestinations())))
+        return -1;
+    return mRouting.value(dest, -1);
+}
+
 Matrix::Matrix(QString id, QObject *parent)
-    : QObject{parent}, mId(id)
+    : QObject{parent}, mId(id),mFirstSource(0),mFirstDest(0),mAlarms(0)
 {}
 
 int Matrix::alarms() const
 {
-    return 0;
+    int alm = mAlarms;
+    auto bus = BusManager::inst()->bus(mBusId);
+    if (!bus)
+        alm|= almNoBus;
+    else
+    {
+        if (!bus->isOnline())
+            alm|=almBusOffline;
+        else
+            alm&=~almBusOffline;
+    }
+    return alm;
 }
 
 bool Matrix::setBusAddress(QString bus, int level, int frame)
 {
     mBusId   = bus;
     mLevel   = level;
-    mFrameId = frame;
+    mBusAddr = frame;
     return true;
 }
 
@@ -92,14 +115,14 @@ void Matrix::setLevel(int newLevel)
     mLevel = newLevel;
 }
 
-int Matrix::frameId() const
+int Matrix::busAddr() const
 {
-    return mFrameId;
+    return mBusAddr;
 }
 
-void Matrix::setFrameId(int newFrameId)
+void Matrix::setBusAddr(int newFrameId)
 {
-    mFrameId = newFrameId;
+    mBusAddr = newFrameId;
 }
 
 bool Matrix::setXPoint(int dest, int source)
@@ -108,7 +131,7 @@ bool Matrix::setXPoint(int dest, int source)
     if (!bus) { //NOTE: this may be a good reason to set an alarm flag
         return false;
     }
-    bus->setXPoint(mFrameId, mLevel, dest, source);
+    bus->setXPoint(mBusAddr, mLevel, dest, source);
 
     return true;
 }
@@ -117,7 +140,7 @@ void Matrix::setLabel(Port::Direction dir, int id, QString label)
 {
     //NOTE: this currently is never backpropagated to the matrix
 
-    if (Router::dirIsValid(dir))
+    if (dirIsValid(dir))
         return;
     auto & list = portList(dir);
 
@@ -129,22 +152,27 @@ void Matrix::setLabel(Port::Direction dir, int id, QString label)
 
 void Matrix::lockPort(int dest)
 {
+    Q_UNUSED(dest)
     //FIXME: not implemented
 }
 
 void Matrix::unlockPort(int dest)
 {
+    Q_UNUSED(dest)
     //FIXME: not implemented
 }
 
 void Matrix::onXPointChanged(QString busId, int addr, int level, int dst, int src)
 {
+    //TODO: add support for inoput/output offsets
     if (busId != mBusId)
         return;
-    if (addr !=mFrameId)
+    if (addr !=mBusAddr)
         return;
     if (level!=mLevel)
         return;
+    // if ((dst<mFirstDest) || (dst>=(mFirstDest + mOutputs.size())))
+
     if ((dst<0) || (dst>=mOutputs.size()))
         return;
     mRouting[dst] = src;
@@ -241,14 +269,14 @@ bool Matrix::loadConfig(const QJsonObject & cfg)
 
     mUid      = cfg.value("uid").toString();
     mLevel    = cfg.value("level").toInt(0);
-    mFrameId  = cfg.value("frame_id").toInt();
+    mBusAddr  = cfg.value("frame_id").toInt();
     mBusId    = cfg.value("bus").toString();
 
     QJsonArray ins  = cfg.value("sources").toArray();
     QJsonArray outs = cfg.value("destinations").toArray();
 
     bool ok = true;
-    for(auto const & v: qAsConst(ins))
+    for(auto const & v: std::as_const(ins))
     {
         if (v.isObject()) {
             auto ip = deserialzePortInfo(v.toObject(), &ok);
@@ -267,7 +295,7 @@ bool Matrix::loadConfig(const QJsonObject & cfg)
             continue;
         }
     }
-    for(auto const & v: qAsConst(outs))
+    for(auto const & v: std::as_const(outs))
     {
         if (v.isObject()) {
             auto ip = deserialzePortInfo(v.toObject(), &ok);
@@ -287,6 +315,7 @@ bool Matrix::loadConfig(const QJsonObject & cfg)
         }
     }
     assignIds(true);
+    mRouting.resize(mOutputs.size(), -1);
     return true;
 }
 
@@ -295,7 +324,7 @@ QJsonObject Matrix::getConfig() const
     QJsonObject cfg;
     cfg.insert("uid", mUid);
     cfg.insert("level", mLevel);
-    cfg.insert("frame_id", mFrameId);
+    cfg.insert("frame_id", mBusAddr);
     cfg.insert("bus", mBusId);
 
     QJsonArray inArray;

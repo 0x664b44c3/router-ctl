@@ -7,6 +7,7 @@
 
 #include "leitchbusdriver.h"
 #include "quartzprotocol.h"
+#include "vikinx_protocol.h"
 #include "bmd_videohub_driver.h"
 #include "objectfactory.h"
 #include <iostream>
@@ -31,6 +32,7 @@ BusManager::BusManager(QObject *parent)
     qDebug()<<"Load upstream (matrix) bus drivers";
     FactoryImpl<AbstractBusDriver, LeitchBusDriver>::registerToFactory(mDriverFactory, "leitch");
     FactoryImpl<AbstractBusDriver, QuartzProtocolDriver>::registerToFactory(mDriverFactory, "quartz");
+    FactoryImpl<AbstractBusDriver, VikinxProtocolDriver>::registerToFactory(mDriverFactory, "vikinx");
     // mDriverFactory->registerClass("gvg-ascii", nullptr);
     FactoryImpl<AbstractBusDriver, BmdBusDriver>::registerToFactory(mDriverFactory, "videohub");
     mDriverFactory->registerClass("network", nullptr);
@@ -119,6 +121,7 @@ void BusManager::onTimer()
 
     checkBusses();
 
+    return;
     int alms = alarms();
     if (alms)
         showBusState = true;
@@ -235,7 +238,7 @@ bool BusManager::load(const QJsonObject & busses)
         }
     }
 
-    return false;
+    return true;
 }
 
 } // namespace Router

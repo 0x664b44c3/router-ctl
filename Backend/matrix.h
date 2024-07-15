@@ -2,13 +2,13 @@
 #define ROUTER_MATRIX_H
 
 #include <QObject>
-#include "engine_common.h"
+#include <engine_common.h>
 #include <QJsonObject>
 
 namespace Router {
 
 /**
- * @brief The Matrix class
+ * @brief The Router class
  * This class is a generic wrapper for a physical matrix or a logical partition thereof.
  * Connection to the relevant bus is obtained through the @class BusManager, alarm bits are provided for
  * abnormal communications or similar.
@@ -20,6 +20,10 @@ class Matrix : public QObject
 
 public:
 
+    enum Alarms {
+        almBusOffline = 0x200,
+        almNoBus= 0x400,
+    };
     struct PortInfo {
         /**
          * @brief id - a local ID for each port
@@ -35,10 +39,16 @@ public:
         QString mnemonic; ///< very short (4 or 8 chars) text to allow labelling of button panels
     };
 
+    PortInfo portInfo(Port::Direction dir, int index) const;
+
+    int numSources() const;
+    int numDestinations() const;
+
     static QJsonObject serializePortInfo(const PortInfo & i);
     static PortInfo deserialzePortInfo(const QJsonObject &obj, bool *ok=nullptr);
 
     QJsonArray getRouting_Json() const;
+    int getXPoint(int dest) const;
 
     explicit Matrix(QString id, QObject *parent = nullptr);
 
@@ -53,8 +63,8 @@ public:
     int level() const;
     void setLevel(int newLevel);
 
-    int frameId() const;
-    void setFrameId(int newFrameId);
+    int busAddr() const;
+    void setBusAddr(int newFrameId);
 
     QString busId() const;
     void setBusId(const QString &newBusId);
@@ -66,7 +76,7 @@ public:
     QString uid() const;
     void setUid(const QString &newUid);
 
-    int portFromId(Router::Port::Direction dir, QString id);
+    int portFromId(Port::Direction dir, QString id);
 
     void assignIds(bool reset=false);
 
@@ -88,6 +98,14 @@ public slots:
     /// @brief unlockPort - unlocks a port on the router
     void unlockPort(int dest);
 
+    /**
+     * @brief onXPointChanged - invoked upon xpoint changed message from the bus
+     * @param busId - alphanumeric bus id
+     * @param addr - router "frame address" or similar
+     * @param level - level
+     * @param dst - destination, numeric, starting at 0
+     * @param src - source, numeric, starting at 0
+     */
     void onXPointChanged(QString busId,
                          int addr, int level, int dst, int src);
 
@@ -98,10 +116,13 @@ signals:
 
 private:
     int mLevel;
-    int mFrameId;
+    int mBusAddr;
     QString mBusId;
     QString mUid;
     QString mId;
+    int mFirstSource;
+    int mFirstDest;
+    mutable int mAlarms;
     QVector<PortInfo> mInputs;
     QVector<PortInfo> mOutputs;
     QVector<int> mRouting;

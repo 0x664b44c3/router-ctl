@@ -36,6 +36,7 @@ bool Controller::handleRequest(QString url, HttpContext &context, QByteArray req
             {
                 if (!rh.rsrc)
                 {
+                    qWarning()<<"registered handler is a nullptr";
                     genericHttpError(500,context);
                     return true;
                 }
@@ -49,6 +50,7 @@ bool Controller::handleRequest(QString url, HttpContext &context, QByteArray req
                 bool ok = rh.rsrc->handleRequest(url, context, requestData);
                 if (!ok)
                 {
+                    qWarning()<<"handler returned false";
                     genericHttpError(501, context);
                 }
                 return true;

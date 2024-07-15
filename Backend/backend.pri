@@ -14,7 +14,8 @@ SOURCES +=\
          $$PWD/matrix.cpp \
          $$PWD/matrixmanager.cpp \
          $$PWD/quartzprotocol.cpp \
-         $$PWD/routermanager.cpp
+         $$PWD/routermanager.cpp \
+         $$PWD/vikinx_protocol.cpp
 
 HEADERS += \
          $$PWD/abstractbusdriver.h \
@@ -22,8 +23,10 @@ HEADERS += \
          $$PWD/busmanager.h \
          $$PWD/gvgbusdrivers.h \
          $$PWD/iostreambusbase.h \
+         $$PWD/json-utils.h \
          $$PWD/leitchbusdriver.h \
          $$PWD/matrix.h \
          $$PWD/matrixmanager.h \
          $$PWD/quartzprotocol.h \
-         $$PWD/routermanager.h
+         $$PWD/routermanager.h \
+         $$PWD/vikinx_protocol.h

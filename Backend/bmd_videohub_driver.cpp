@@ -21,6 +21,15 @@
 
 namespace Router {
 
+/**
+ * @brief BmdBusDriver::BmdBusDriver balckmagic videohub protocol
+ * @param busId
+ * @param parent
+ *
+ * @note VideoHub docu lists no way to interrogate the router nor does it name a way to disconnect an output completely
+ * Only one single VideoHub device can be connected per bus, this driver must therefore
+ * cache any xpoint change message (especially the status du,p which is emitted upon connect
+ */
 BmdBusDriver::BmdBusDriver(QString busId, QObject * parent) :
     IOStreamBusDriverBase(busId, parent, 9990)
 {

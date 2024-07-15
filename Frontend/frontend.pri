@@ -11,6 +11,9 @@ include($$PWD/REST/rest-frontend.pri)
 # include a REST server based on QHttpServer module
 include($$PWD/httpserver/httpserver.pri)
 
+# panel protocols will go here (basically reimplementing the router side of te protocols in the backends folder)
+include($$PWD/Panel/panel_protocols.pri)
+
 
 qtHaveModule(websockets) {
     include($$PWD/websocket/websocket.pri)
