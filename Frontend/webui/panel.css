@@ -1,0 +1,65 @@
+div.buttonRow {
+    max-width:1200pt;
+}
+div.buttonGrp{
+    display: inline-block;
+}
+span.btn {
+    padding-left:2pt;
+    padding-right: 2pt;
+    width: 64pt;
+    margin: 2px;
+    display: inline-block;
+    text-align: center;
+    margin-bottom: 12pt;
+    padding-bottom: 2pt;
+    border-bottom: none;
+}
+span.btn.act {
+    border-bottom: 2pt solid green;
+}
+
+span.btn span.label {
+    display: block;
+    border-bottom: 1px solid gray;
+    margin-bottom: 4pt;
+}
+span.btn button {
+    min-width: 95%;
+    min-height:32pt;
+    background-color: #e0e0e0;
+}
+span.btn.dst button.sel {
+    background-color: #80ff80;
+}
+
+span.btn.dst button.lock {
+    background-color: #ff8080;
+}
+
+span.btn.src button.sel {
+    background-color: #ffff80;
+}
+
+span.tally
+{
+    color: #e0e0e0;
+}
+
+span.tally.red
+{
+    color: #ff0000;
+}
+
+span.tally.green
+{
+    color: #00ff00;
+}
+span.tally.both
+{
+    color: #ff0000;
+}
+span.tally.both :nth-child(2)
+{
+    color: #00ff00;
+}

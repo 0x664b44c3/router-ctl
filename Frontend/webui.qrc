@@ -3,5 +3,7 @@
         <file>webui/error_page.html</file>
         <file>webui/index.html</file>
         <file>webui/web_panel.html</file>
+        <file>webui/panel.js</file>
+        <file>webui/panel.css</file>
     </qresource>
 </RCC>

@@ -58,6 +58,7 @@
 #include <restcontroller.h>
 #include <qhttpserveradapter.h>
 
+#include <QStandardPaths>
 #include <QUrl>
 void debugMessageHandler(QtMsgType mType, const QMessageLogContext & ctx, const QString & msg)
 {
@@ -170,6 +171,7 @@ int main(int argc, char *argv[])
     Router::BusManager::inst();
 
     HttpServer srv(&a);
+    // staticFileServer fs(QStandardPaths::writableLocation(QStandardPaths::DocumentsLocation)+"/router-webui", &a);
     staticFileServer fs(":/webui", &a);
     srv.registerHandler("/", &fs);
     REST::Controller rsc(&a);

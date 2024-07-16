@@ -7,6 +7,7 @@
 #include <QByteArray>
 #include <QUrl>
 
+#include <QJsonDocument>
 #include "rest_types.h"
 namespace REST {
 
@@ -26,6 +27,16 @@ public:
     virtual bool handleRequest (QString url, HttpContext & context, QByteArray requestBody);
     explicit RessourceInterface(Controller * controller);
     ~RessourceInterface();
+
+    //static helpers
+
+    static void respondJson(const QJsonDocument &, REST::HttpContext &context, int code = 200);
+    static void respondJson(const QJsonObject   &, REST::HttpContext &context, int code = 200);
+    static void respondJson(const QJsonArray    &, REST::HttpContext &context, int code = 200);
+    static void respondJson(const QJsonValue    &, REST::HttpContext &context, int code = 200, const QString &key = "value");
+    static void respondText(const QString & text, REST::HttpContext &context, int code = 200);
+
+
 protected:
     Controller * mController;
 };

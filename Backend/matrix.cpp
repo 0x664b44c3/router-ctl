@@ -131,8 +131,14 @@ bool Matrix::setXPoint(int dest, int source)
     if (!bus) { //NOTE: this may be a good reason to set an alarm flag
         return false;
     }
-    bus->setXPoint(mBusAddr, mLevel, dest, source);
+    if ((dest<0)||(dest>=numDestinations()))
+        return false;
+    if ((source<-1)||(source>=numSources()))
+        return false;
+    mRouting[dest] = source;
 
+    qDebug()<<"set xpoint"<<dest<<source;
+    bus->setXPoint(mBusAddr, mLevel, dest, source);
     return true;
 }
 
@@ -301,13 +307,13 @@ bool Matrix::loadConfig(const QJsonObject & cfg)
             auto ip = deserialzePortInfo(v.toObject(), &ok);
             mOutputs.append(ip);
             if (!ok)
-                qWarning()<<"Could not deserialize output port object"<<mInputs.size() + 1<<"on matrix"<<mId;
+                qWarning()<<"Could not deserialize output port object"<<mOutputs.size() + 1<<"on matrix"<<mId;
         } else if (v.isString()) {
             PortInfo port;
             port.label = v.toString();
             mOutputs << port;
         } else {
-            qWarning()<<"Illegal type for output"<<mInputs.size() + 1<<"on matrix"<<mId;
+            qWarning()<<"Illegal type for output"<<mOutputs.size() + 1<<"on matrix"<<mId;
             PortInfo port;
             port.label = QString::asprintf("output-%d", mInputs.size() + 1);
             mOutputs << port;

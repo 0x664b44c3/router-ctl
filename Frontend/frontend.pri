@@ -33,4 +33,5 @@ RESOURCES += \
 DISTFILES += \
     $$PWD/webui/error_page.html \
     $$PWD/webui/index.html \
+    $$PWD/webui/panel.css \
     $$PWD/webui/web_panel.html

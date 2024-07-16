@@ -20,39 +20,6 @@ bool RouterBaseRessource::handleRequest(QString url, REST::HttpContext &context,
     return REST::delegateRequest(this, url, context, requestBody);
 }
 
-void RouterBaseRessource::respondJson(const QJsonDocument & jd, REST::HttpContext & context, int code)
-{
-    context.response.contentType = "application/json";
-    context.response.data = jd.toJson(QJsonDocument::Compact);
-    context.response.statusCode = code;
-}
-
-void RouterBaseRessource::respondJson(const QJsonObject & obj, REST::HttpContext &context, int code)
-{
-    respondJson(QJsonDocument(obj), context, code);
-}
-
-void RouterBaseRessource::respondJson(const QJsonArray & array, REST::HttpContext &context, int code)
-{
-    respondJson(QJsonDocument(array), context, code);
-}
-
-void RouterBaseRessource::respondJson(const QJsonValue & value, REST::HttpContext &context, int code, const QString &key)
-{
-    if (value.isObject())
-        respondJson(value.toObject(), context, code);
-    else if (value.isArray())
-    {
-        respondJson(value.toArray(), context, code);
-    }
-    else
-    {
-        QJsonObject tmpObj;
-        tmpObj.insert(key, value);
-        respondJson(tmpObj, context, code);
-    }
-}
-
 QJsonObject RouterBaseRessource::routerStatus(QString id)
 {
     auto rman = Router::MatrixManager::inst();
@@ -66,7 +33,7 @@ QJsonObject RouterBaseRessource::routerStatus(QString id)
     { //TODO: implement the other parameters
         rtrStatusObj.insert("status", "active");
         rtrStatusObj.insert("alarms", rtr->alarms());
-        rtrStatusObj.insert("routing", rtr->getRouting_Json());
+        rtrStatusObj.insert("xpoint", rtr->getRouting_Json());
         int nsrc = rtr->numSources();
         int ndst = rtr->numDestinations();
         QJsonArray rs;
@@ -241,9 +208,25 @@ bool RouterBaseRessource::handlePost(QString url, REST::HttpContext &context, QB
         //we have a router to control now
 
         qDebug()<<context.request.query.toString();
+        int src=-1;
+        int dst=-1;
+        bool ok;
 
-        if (action=="set-xpt") {
-            qDebug()<< context.request.formData;
+        if (action=="xpoint-set") {
+            if (!context.request.formData.isEmpty())
+            {
+                src = context.request.formData.value("src", "-1").toInt(&ok);
+                if (ok)
+                    dst = context.request.formData.value("dst", "-1").toInt(&ok);
+            }
+            if (!ok)
+            {
+                respondText("Invalid data.", context, 400);
+                return true;
+            }
+            if (ok && (dst>=0))
+                router->setXPoint(dst, src);
+            respondText("Ok.", context);
             return true;
         }
     }

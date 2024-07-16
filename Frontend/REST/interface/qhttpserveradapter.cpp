@@ -96,11 +96,15 @@ bool REST::QHttpServerAdapter::handleRequest(QString url, const QHttpServerReque
 
     context.request.contentType = contentType;
 
-    contentType = contentType.toLower();
+    context.request.body = request.body();
+
     if ((request.body().size())
-        && ((contentType == "application/x-www-form-urlencoded") || (contentType == "multipart/form-data"))
+        && ((contentType.startsWith("application/x-www-form-urlencoded")) || (contentType.startsWith("multipart/form-data")))
         ) {
         context.request.formData = HttpServer::parseFormData(contentType, request.body());
+    }
+    else
+    {
     }
 
 

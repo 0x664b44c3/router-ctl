@@ -34,6 +34,7 @@ struct HttpContext {
     struct {
         QUrl url;
         QUrlQuery query;
+        QByteArray body;
         QMap<QString, QByteArray> headers;
         QMap<QString, QByteArray> formData;
         QString contentType;
