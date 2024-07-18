@@ -1,6 +1,7 @@
 var apiUrl;
 var routerId;
 var state = [];
+var refreshTimer = null;
 
 function dv(val, def)
 {
@@ -269,6 +270,10 @@ function initPanel()
     createButtons(xbar, nsrc, ndst);
 
     assignClickEvent(xbar, nsrc, ndst);
+
+    if (refreshTimer !== null)
+        clearInterval(refreshTimer);
+    refreshTimer = setInterval(refreshXpoint, 2500);c
 }
 
 

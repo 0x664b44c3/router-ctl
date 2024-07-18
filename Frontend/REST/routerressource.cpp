@@ -55,7 +55,7 @@ QJsonObject RouterBaseRessource::routerStatus(QString id)
         }
         for(int i=0;i<ndst;++i)
         {
-            auto info = rtr->portInfo(Router::Port::Direction::Source, i);
+            auto info = rtr->portInfo(Router::Port::Direction::Destination, i);
             QJsonObject obj;
             obj.insert("label",    info.label);
             obj.insert("id",       info.id);
@@ -143,7 +143,7 @@ bool RouterBaseRessource::handleGet(QString url, REST::HttpContext &context)
                         respondJson(QJsonObject(), context, 404);
                         return true;
                     }
-                    auto info = router->portInfo(Router::Port::Direction::Source, idx);
+                    auto info = router->portInfo(Router::Port::Direction::Destination, idx);
                     QJsonObject obj;
                     obj.insert("label",    info.label);
                     obj.insert("id",       info.id);
