@@ -9,18 +9,37 @@
 #include <QJsonValue>
 
 
-RouterBaseRessource::RouterBaseRessource(REST::Controller *restController, QObject *parent)
+PanelInterface::PanelInterface(REST::Controller *restController, QObject *parent)
     : QObject{parent}, SplitMethodRessourceInterface{restController}
 {}
 
 
-bool RouterBaseRessource::handleRequest(QString url, REST::HttpContext &context, QByteArray requestBody)
+bool PanelInterface::handleRequest(QString url, REST::HttpContext &context, QByteArray requestBody)
 {
-    qDebug()<<"handle request for url"<<url<<context.method;
-    return REST::delegateRequest(this, url, context, requestBody);
+    bool ok = REST::delegateRequest(this, url, context, requestBody);
+    if (!ok)
+        qDebug()<<"unhandled request for url"<<url<<context.method;
+    return ok;
 }
 
-QJsonObject RouterBaseRessource::routerStatus(QString id)
+QJsonObject PanelInterface::JsonForPort(Router::Matrix *mtx, Router::Port::Direction dir, int idx)
+{
+    auto port = mtx->portInfo(dir, idx);
+    QJsonObject obj;
+    obj.insert("id",       port.id);
+    obj.insert("uid",      port.uid);
+    obj.insert("label",    port.label);
+    obj.insert("mnemonic", port.mnemonic);
+
+    if (dir == Router::Port::Direction::Destination) {
+        int xpoint = mtx->getXPoint(idx);
+        obj.insert("xpoint",  xpoint );
+        obj.insert("routing",  mtx->portInfo(Router::Port::Direction::Source, xpoint).uid);
+    }
+    return obj;
+}
+
+QJsonObject PanelInterface::routerStatus(QString id)
 {
     auto rman = Router::MatrixManager::inst();
     QJsonObject rtrStatusObj;
@@ -32,8 +51,8 @@ QJsonObject RouterBaseRessource::routerStatus(QString id)
     else
     { //TODO: implement the other parameters
         rtrStatusObj.insert("status", "active");
-        rtrStatusObj.insert("alarms", rtr->alarms());
-        rtrStatusObj.insert("xpoint", rtr->getRouting_Json());
+        rtrStatusObj.insert("alarm", rtr->alarms());
+        rtrStatusObj.insert("xpoint", rtr->getXPointsJson());
         int nsrc = rtr->numSources();
         int ndst = rtr->numDestinations();
         QJsonArray rs;
@@ -45,24 +64,14 @@ QJsonObject RouterBaseRessource::routerStatus(QString id)
 
         for(int i=0;i<nsrc;++i)
         {
-            auto info = rtr->portInfo(Router::Port::Direction::Source, i);
-            QJsonObject obj;
-            obj.insert("label",    info.label);
-            obj.insert("id",       info.id);
-            obj.insert("uid",      info.uid);
-            obj.insert("mnemonic", info.mnemonic);
-            ins.append(obj);
+            ins.append(JsonForPort(rtr, Router::Port::Direction::Source, i));
         }
         for(int i=0;i<ndst;++i)
         {
-            auto info = rtr->portInfo(Router::Port::Direction::Destination, i);
-            QJsonObject obj;
-            obj.insert("label",    info.label);
-            obj.insert("id",       info.id);
-            obj.insert("uid",      info.uid);
-            obj.insert("mnemonic", info.mnemonic);
-            obj.insert("routing",  rtr->getXPoint(i));
-            outs.append(obj);
+
+            outs.append(
+                JsonForPort(rtr, Router::Port::Direction::Destination, i)
+                );
         }
         rtrStatusObj.insert("inputs", ins);
         rtrStatusObj.insert("outputs", outs);
@@ -70,7 +79,7 @@ QJsonObject RouterBaseRessource::routerStatus(QString id)
     return rtrStatusObj;
 }
 
-bool RouterBaseRessource::handleGet(QString url, REST::HttpContext &context)
+bool PanelInterface::handleGet(QString url, REST::HttpContext &context)
 {
     auto rman = Router::MatrixManager::inst();
     QStringList path = url.split('/', Qt::SkipEmptyParts);
@@ -127,12 +136,7 @@ bool RouterBaseRessource::handleGet(QString url, REST::HttpContext &context)
                         respondJson(QJsonObject(), context, 404);
                         return true;
                     }
-                    auto info = router->portInfo(Router::Port::Direction::Source, idx);
-                    QJsonObject obj;
-                    obj.insert("label",    info.label);
-                    obj.insert("id",       info.id);
-                    obj.insert("uid",      info.uid);
-                    obj.insert("mnemonic", info.mnemonic);
+                    QJsonObject obj = JsonForPort(router, Router::Port::Direction::Source, idx);
                     respondJson(obj, context, 200);
                     return true;
                 }
@@ -143,13 +147,7 @@ bool RouterBaseRessource::handleGet(QString url, REST::HttpContext &context)
                         respondJson(QJsonObject(), context, 404);
                         return true;
                     }
-                    auto info = router->portInfo(Router::Port::Direction::Destination, idx);
-                    QJsonObject obj;
-                    obj.insert("label",    info.label);
-                    obj.insert("id",       info.id);
-                    obj.insert("uid",      info.uid);
-                    obj.insert("mnemonic", info.mnemonic);
-                    obj.insert("routing",  router->getXPoint(idx));
+                    QJsonObject obj = JsonForPort(router, Router::Port::Direction::Destination, idx);
                     respondJson(obj, context, 200);
                     return true;
                 }
@@ -174,7 +172,7 @@ bool RouterBaseRessource::handleGet(QString url, REST::HttpContext &context)
             else
             {
                 QJsonObject obj;
-                obj.insert("routing", router->getRouting_Json());
+                obj.insert("xpoint", router->getXPointsJson());
                 obj.insert("size", QJsonArray()<<router->numSources() <<router->numDestinations());
                 obj.insert("alarm", router->alarms());
                 obj.insert("status", "active");
@@ -185,7 +183,7 @@ bool RouterBaseRessource::handleGet(QString url, REST::HttpContext &context)
     return true;
 }
 
-bool RouterBaseRessource::handlePost(QString url, REST::HttpContext &context, QByteArray data)
+bool PanelInterface::handlePost(QString url, REST::HttpContext &context, QByteArray data)
 {
     auto rman = Router::MatrixManager::inst();
     QStringList path = url.split('/', Qt::SkipEmptyParts);
@@ -239,18 +237,18 @@ bool RouterBaseRessource::handlePost(QString url, REST::HttpContext &context, QB
 
 }
 
-bool RouterBaseRessource::handlePut(QString url, REST::HttpContext &context, QByteArray data)
+bool PanelInterface::handlePut(QString url, REST::HttpContext &context, QByteArray data)
 {
     return handlePost(url, context, data);
 }
 
-bool RouterBaseRessource::handleDelete(QString url, REST::HttpContext &context, QByteArray data)
+bool PanelInterface::handleDelete(QString url, REST::HttpContext &context, QByteArray data)
 {
     return false;
 
 }
 
-bool RouterBaseRessource::handlePatch(QString url, REST::HttpContext &context, QByteArray data)
+bool PanelInterface::handlePatch(QString url, REST::HttpContext &context, QByteArray data)
 {
     return false;
 }

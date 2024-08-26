@@ -15,6 +15,7 @@ SOURCES +=\
          $$PWD/matrixmanager.cpp \
          $$PWD/quartzprotocol.cpp \
          $$PWD/routermanager.cpp \
+         $$PWD/termctl.cpp \
          $$PWD/vikinx_protocol.cpp
 
 HEADERS += \
@@ -29,4 +30,5 @@ HEADERS += \
          $$PWD/matrixmanager.h \
          $$PWD/quartzprotocol.h \
          $$PWD/routermanager.h \
+         $$PWD/termctl.h \
          $$PWD/vikinx_protocol.h

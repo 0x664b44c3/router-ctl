@@ -204,6 +204,17 @@ bool HttpServer::handleRequest(const QHttpServerRequest &request, QHttpServerRes
 
     QString ressourcePath;
 
+    QMap<QString, QByteArray> headers;
+    for(auto it = request.headers().begin(); it!= request.headers().end(); ++it)
+    {
+        QByteArray k = std::get<0>(*it);
+        QByteArray v = std::get<1>(*it);
+
+        headers.insert(QString::fromLatin1(k), v);
+    }
+    if (headers.value("Upgrade").toLower() == "websocket")
+        return true;
+
     HttpResponderInterface * rsp = nullptr;
 
     bool keepPath = false;
@@ -244,7 +255,7 @@ bool HttpServer::handleRequest(const QHttpServerRequest &request, QHttpServerRes
                 urlPath.remove(0, ressourcePath.lastIndexOf('/') - 1); //preserve the /
         }
 
-        qDebug()<<"Calling handler for" << urlPath<<"from url"<<request.url().toString();
+        // qDebug()<<"Calling handler for" << urlPath<<"from url"<<request.url().toString();
 
         bool ret = rsp->handleRequest(urlPath, request, responder);
         if (!ret)

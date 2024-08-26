@@ -34,6 +34,8 @@ public:
     virtual QString driverName() const;
     virtual QString driverInfo() const;
 
+    virtual int alarms() const;
+
 public slots:
     virtual void setXPoint(int addr, int level, int dst, int src) = 0;
     virtual void queryRouter(int addr, int level) = 0;

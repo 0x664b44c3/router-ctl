@@ -60,6 +60,9 @@
 
 #include <QStandardPaths>
 #include <QUrl>
+
+#include "websocket/httpwebsocketconnector.h"
+
 void debugMessageHandler(QtMsgType mType, const QMessageLogContext & ctx, const QString & msg)
 {
     Q_UNUSED(ctx)
@@ -171,15 +174,15 @@ int main(int argc, char *argv[])
     Router::BusManager::inst();
 
     HttpServer srv(&a);
-    // staticFileServer fs(QStandardPaths::writableLocation(QStandardPaths::DocumentsLocation)+"/router-webui", &a);
-    staticFileServer fs(":/webui", &a);
+    staticFileServer fs(QStandardPaths::writableLocation(QStandardPaths::DocumentsLocation)+"/router-webui", &a);
+    // staticFileServer fs(":/webui", &a);
     srv.registerHandler("/", &fs);
     REST::Controller rsc(&a);
     REST::QHttpServerAdapter adapter(QPointer<REST::Controller>(&rsc), &a);
+    REST::WebsocketQHttpServerAdapter wsa(&srv);
 
 
-
-    rsc.registerRessource("/router/", new RouterBaseRessource(&rsc, &a));
+    rsc.registerRessource("/router/", new PanelInterface(&rsc, &a));
     rsc.registerRessource("/bus/", nullptr);
     rsc.registerRessource("/panel/", nullptr);
     QString apiBase="";

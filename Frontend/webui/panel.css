@@ -41,6 +41,33 @@ span.btn.src button.sel {
     background-color: #ffff80;
 }
 
+span.indicator {
+    margin: 2pt;
+    border: 1px solid black;
+    min-height: 16pt;
+    min-width: 48pt;
+    padding: 2pt;
+    font-weight: 800;
+    font-size: 14pt;
+    background-color: lightgray;
+    color: darkgray;
+}
+span.indicator:nth-child(n+2) {
+    margin-left: 8pt;
+}
+span.green {
+    background-color: #8f8;
+    color: black;
+}
+span.red {
+    background-color: #f00;
+    color: white;
+}
+span.offred {
+    background-color: #600;
+    color: #a0a0a0;
+}
+
 span.tally
 {
     color: #e0e0e0;
@@ -59,7 +86,14 @@ span.tally.both
 {
     color: #ff0000;
 }
-span.tally.both :nth-child(2)
+span.tally.both:nth-child(2)
 {
     color: #00ff00;
+}
+
+div.status_panel {
+    background-color: darkgray;
+    border: 1px solid black;
+    padding: 8pt 8pt 8pt 8pt;
+    margin: 2pt 0 4pt 0;
 }

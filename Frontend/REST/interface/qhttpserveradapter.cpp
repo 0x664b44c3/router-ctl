@@ -385,7 +385,7 @@ bool REST::QHttpServerAdapter::handleRequest(QString url, const QHttpServerReque
 
     for(auto it = context.response.headers.begin(); it!=context.response.headers.end(); ++it)
     {
-        qDebug()<<it.key()<<*it;
+        // qDebug()<<it.key()<<*it;
         responder.writeHeader(it.key().toLatin1(), *it);
 
     }

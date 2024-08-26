@@ -32,6 +32,7 @@ bool staticFileServer::handleRequest(QString url, const QHttpServerRequest &requ
     QFile file(url);
     if (!file.exists())
     {
+        qDebug()<<file.fileName() << "does not exist";
         HttpServer::notFound(request, responder);
         return true;
     }

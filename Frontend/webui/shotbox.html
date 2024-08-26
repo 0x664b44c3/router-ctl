@@ -9,10 +9,10 @@
 </head>
 
 <body>
-<h1>Shot Box</h1>
+<h1>Web panel</h1>
 <div id="selector">
 <form method="get" action="" id="router_selector">
-<label for="sb_select">Select router / panel</label>&nbsp;<select name="router" id="sb_select">
+<label for="panel_select">Select router / panel</label>&nbsp;<select name="router" id="panel_select">
 <option value="">None</option>
 </select >&nbsp;<button type="submit">OK</button>
 </div>
@@ -21,13 +21,21 @@
 <span class="indicator" id="alarm">ALARM</span>
 </div>
 <div class="panel">
+<!--<h2>Matrix 1</h2>-->
 <h3>Outputs</h3>
-<div class = "buttonRow shotbox" id="shotbox">
+<div class = "buttonRow" id="p0_dst">
 </div>
+<hr>
+<h3>Inputs</h3>
+<div class = "buttonRow" id="p0_src">
+</div>
+<div id="infobox">
+<div id="info_title">&#8505; Info</div>
+<div id="info_foldout"><ul id="infolist"></ul></div>
 <script >
 window.addEventListener('load', function() {
   console.log('The page fully loaded, including all dependent resources!');
-  //initUi();
+  initUi();
 });
 </script>
 </body>

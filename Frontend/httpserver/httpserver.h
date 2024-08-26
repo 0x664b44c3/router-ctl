@@ -40,6 +40,8 @@ protected:
 private:
     QString mIndexPage;
     LeitchHack *mRouter;
+private slots:
+
 };
 
 #endif // HTTPSERVER_H

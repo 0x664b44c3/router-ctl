@@ -50,7 +50,7 @@ void RouterCore::debugLinks()
     // qDebug() << "";
 }
 
-QDebug operator<<(QDebug debug, const Router::Request &req)
+QDebug operator<<(QDebug debug, const Router::Request req)
 {
     QDebugStateSaver saver(debug);
     debug.nospace() <<"{rtr:"<<req.routerUID<<", "

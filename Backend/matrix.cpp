@@ -62,7 +62,7 @@ Matrix::PortInfo Matrix::deserialzePortInfo(const QJsonObject & obj, bool * ok)
     return info;
 }
 
-QJsonArray Matrix::getRouting_Json() const
+QJsonArray Matrix::getXPointsJson() const
 {
     QJsonArray routing;
     for(auto i: std::as_const(mRouting))
@@ -97,6 +97,31 @@ int Matrix::alarms() const
     return alm;
 }
 
+QStringList Matrix::alarmList() const
+{
+    QStringList alarmTexts;
+    int alarm = alarms();
+    if (alarm & almNoBus)
+        alarmTexts << "[CRITICAL] No bus assigned";
+    if (alarm & almBusOffline)
+        alarmTexts << "[CRITICAL] Bus offline";
+    alarm &= ~ 0x600;
+    if (alarm) {
+        for(int i=15; i>7; --i)
+        {
+            if (alarm & (1<<i))
+                alarmTexts << "[CRITICAL] " + QString::asprintf("%04x", (1<<i));
+        }
+        for(int i=7; i>=0; --i)
+        {
+            if (alarm & (1<<i))
+                alarmTexts << "[WARNING]  " + QString::asprintf("%04x", (1<<i));
+        }
+    }
+    alarmTexts << BusManager::inst()->alarmStrings(mBusId);
+    return alarmTexts;
+}
+
 bool Matrix::setBusAddress(QString bus, int level, int frame)
 {
     mBusId   = bus;
@@ -123,6 +148,8 @@ int Matrix::busAddr() const
 void Matrix::setBusAddr(int newFrameId)
 {
     mBusAddr = newFrameId;
+    auto bus = BusManager::inst()->bus(mBusId);
+    bus->queryRouter(mBusAddr, mLevel);
 }
 
 bool Matrix::setXPoint(int dest, int source)
@@ -277,6 +304,8 @@ bool Matrix::loadConfig(const QJsonObject & cfg)
     mLevel    = cfg.value("level").toInt(0);
     mBusAddr  = cfg.value("frame_id").toInt();
     mBusId    = cfg.value("bus").toString();
+    if (mUid.isEmpty())
+        mUid = "rtr-" + mId;
 
     QJsonArray ins  = cfg.value("sources").toArray();
     QJsonArray outs = cfg.value("destinations").toArray();
@@ -291,11 +320,13 @@ bool Matrix::loadConfig(const QJsonObject & cfg)
                 qWarning()<<"Could not deserialize input port object"<<mInputs.size() + 1<<"on matrix"<<mId;
         } else if (v.isString()) {
             PortInfo port;
+            port.uid = mUid + "-src-" + QString::number(mInputs.size() + 1, 10);
             port.label = v.toString();
             mInputs << port;
         } else {
             qWarning()<<"Illegal type for input"<<mInputs.size() + 1<<"on matrix"<<mId;
             PortInfo port;
+            port.uid = mUid + "-src-" + QString::number(mInputs.size() + 1, 10);
             port.label = QString::asprintf("input-%d", mInputs.size() + 1);
             mInputs << port;
             continue;
@@ -304,18 +335,20 @@ bool Matrix::loadConfig(const QJsonObject & cfg)
     for(auto const & v: std::as_const(outs))
     {
         if (v.isObject()) {
-            auto ip = deserialzePortInfo(v.toObject(), &ok);
-            mOutputs.append(ip);
+            auto op = deserialzePortInfo(v.toObject(), &ok);
+            mOutputs.append(op);
             if (!ok)
                 qWarning()<<"Could not deserialize output port object"<<mOutputs.size() + 1<<"on matrix"<<mId;
         } else if (v.isString()) {
             PortInfo port;
+            port.uid = mUid + "-dst-" + QString::number(mOutputs.size() + 1, 10);
             port.label = v.toString();
             mOutputs << port;
         } else {
             qWarning()<<"Illegal type for output"<<mOutputs.size() + 1<<"on matrix"<<mId;
             PortInfo port;
-            port.label = QString::asprintf("output-%d", mInputs.size() + 1);
+            port.uid = mUid + "-dst-" + QString::number(mOutputs.size() + 1, 10);
+            port.label = QString::asprintf("output-%d", mOutputs.size() + 1);
             mOutputs << port;
             continue;
         }

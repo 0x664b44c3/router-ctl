@@ -3,7 +3,6 @@ INCLUDEPATH+=$$PWD
 #ensure we have the network module
 QT+=network
 
-
 # pull in FastCGI module
 include($$PWD/../submodules/fastcgi/fastcgi/fastcgi.pri)
 include($$PWD/REST/rest-frontend.pri)
@@ -34,4 +33,6 @@ DISTFILES += \
     $$PWD/webui/error_page.html \
     $$PWD/webui/index.html \
     $$PWD/webui/panel.css \
+    $$PWD/webui/panel.js \
+    $$PWD/webui/shotbox.html \
     $$PWD/webui/web_panel.html

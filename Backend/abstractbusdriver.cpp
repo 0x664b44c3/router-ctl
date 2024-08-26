@@ -45,4 +45,9 @@ QString AbstractBusDriver::driverInfo() const
 {
     return QStringLiteral("abstract base driver class");
 }
+
+int AbstractBusDriver::alarms() const
+{
+    return 0;
+}
 }

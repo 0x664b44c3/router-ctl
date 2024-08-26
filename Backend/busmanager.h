@@ -24,9 +24,17 @@ public:
     static BusManager *inst();
 
     enum {
-        alarmBusOffline    = 0x0001,
-        alarmConnectFailed = 0x0100,
-        alarmNoSuchDriver  = 0x0200
+        alarmBusOffline      = 0x0001,
+        alarmConnectFailed   = 0x0010,
+        alarmNoSuchDriver    = 0x0020,
+
+        alarmHwRefLost       = 0x0400,
+
+        alarmHwPsuFailed     = 0x1000,
+        alarmSwInternalError = 0x2000,
+        alarmHwGenericError  = 0x4000,
+        alarmHwFanError      = 0x8000
+
     };
 
     bool load(const QJsonObject &);
@@ -37,6 +45,7 @@ public:
     
     AbstractBusDriver * bus(QString id) const;
     
+    QStringList alarmStrings(QString busId) const;
 private:
     explicit BusManager(QObject *parent = nullptr);
 

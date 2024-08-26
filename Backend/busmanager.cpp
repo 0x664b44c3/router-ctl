@@ -35,7 +35,7 @@ BusManager::BusManager(QObject *parent)
     FactoryImpl<AbstractBusDriver, VikinxProtocolDriver>::registerToFactory(mDriverFactory, "vikinx");
     // mDriverFactory->registerClass("gvg-ascii", nullptr);
     FactoryImpl<AbstractBusDriver, BmdBusDriver>::registerToFactory(mDriverFactory, "videohub");
-    mDriverFactory->registerClass("network", nullptr);
+    // mDriverFactory->registerClass("network", nullptr);
 }
 
 int BusManager::alarms() const
@@ -48,6 +48,10 @@ int BusManager::alarmsForBus(QString busId) const
     return 0;
 }
 
+QStringList BusManager::alarmStrings(QString busId) const
+{
+    return QStringList();
+}
 void BusManager::debugBusState() const
 {
     qDebug()<<" ALM  Started  Online  Driver:BusId";
@@ -121,7 +125,6 @@ void BusManager::onTimer()
 
     checkBusses();
 
-    return;
     int alms = alarms();
     if (alms)
         showBusState = true;
@@ -133,7 +136,7 @@ void BusManager::onTimer()
         if (alms)
         {
             qWarning()<<"Bus Alarms present";
-            std::cerr << "\a" << std::flush;
+            std::cerr << std::flush;
         }
         debugBusState();
         // }
@@ -152,7 +155,7 @@ void BusManager::onMatrixFound(QString busId, int addr, int level, int nSrc, int
 
 void BusManager::onXPointChanged(QString busId, int addr, int level, int dst, int src)
 {
-
+    emit xPointChanged(busId,addr,level,dst,src);
 }
 
 void BusManager::onSourceActive(QString busId, int addr, int level, int src, bool active)

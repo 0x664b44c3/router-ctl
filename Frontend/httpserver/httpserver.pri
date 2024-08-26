@@ -10,6 +10,11 @@ SOURCES += \
     $$PWD/mimedb.cpp \
     $$PWD/staticfileserver.cpp
 
+
+qtHaveModule(websockets) {
+QT+=websockets
+}
+
 qtHaveModule(httpserver) {
 
 DEFINES+=WITH_QT_HTTP_SERVER

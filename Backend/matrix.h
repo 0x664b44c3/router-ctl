@@ -47,12 +47,13 @@ public:
     static QJsonObject serializePortInfo(const PortInfo & i);
     static PortInfo deserialzePortInfo(const QJsonObject &obj, bool *ok=nullptr);
 
-    QJsonArray getRouting_Json() const;
+    QJsonArray getXPointsJson() const;
     int getXPoint(int dest) const;
 
     explicit Matrix(QString id, QObject *parent = nullptr);
 
     int alarms() const;
+    QStringList alarmList() const;
 
     bool setBusAddress(QString bus, int level=0, int frame=0);
 

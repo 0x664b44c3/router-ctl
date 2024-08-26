@@ -13,8 +13,8 @@ PanelConnection::PanelConnection(QTcpSocket *sock, PanelServer *parent)
 {
     mCurrentRun=0;
     QTimer::singleShot(0, this, &PanelConnection::sendBanner);
-    mNumInputs = 128;
-    mNumOutputs = 128;
+    mNumInputs = 288; //largest videohub they did in max config
+    mNumOutputs = 288;
     QObject::connect(sock, &QTcpSocket::readyRead, this, &PanelConnection::onDataReady);
     QTimer * tmr = new QTimer(this);
     tmr->start(100);
